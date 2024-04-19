@@ -1,0 +1,65 @@
+/* Component-specific styles for the registration component */
+.register-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  border-radius: 10px;
+  background-color: #222; /* Dark background for the registration component */
+  box-shadow: 0px 0px 20px 0px rgba(0,0,0,0.75);
+  text-align: center; /* Center the content */
+}
+
+h2 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #fff; /* White text color */
+}
+
+.input-container {
+  margin-bottom: 20px;
+}
+
+/* Style input fields */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  width: 100%; /* Full width */
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #444; /* Dark background */
+  color: #fff; /* White text color */
+  margin-bottom: 10px;
+}
+
+/* Style the Register button */
+button[type="submit"] {
+  width: 100%; /* Full width */
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #007bff; /* Blue color */
+  color: #fff; /* White text color */
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+/* Button hover effect */
+button[type="submit"]:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+}
+
+.error-message {
+  color: #ff6347; /* Red color for error messages */
+  font-size: 0.8rem;
+  margin-top: 5px;
+}
+
+/*!* Override default styles for mat-form-field *!*/
+/*.mat-form-field-appearance-fill {*/
+/*  margin-bottom: 10px; !* Adjust spacing between input fields *!*/
+/*}*/
+
+/*.mat-form-field-appearance-fill .mat-form-field-flex {*/
+/*  padding: 0; !* Remove padding around input field *!*/
+/*}*/
