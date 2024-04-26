@@ -4,3 +4,8 @@ body {
   font-family: 'Roboto', sans-serif;
   color: #fff; /* White text color */
 }
+
+.error-snackbar {
+  background-color: #f44336;
+  color: white;
+}

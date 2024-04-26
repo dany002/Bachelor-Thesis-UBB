@@ -1,4 +1,4 @@
-.register-container {
+.login-container {
   max-width: 450px;
   margin: 100px auto 0;
   padding: 20px;
@@ -42,7 +42,7 @@ button[type="submit"]:hover {
   margin-top: 5px;
 }
 
-.login-link {
+.register-link {
   text-align: center;
   margin-top: 20px;
 }
@@ -52,13 +52,13 @@ button[type="submit"]:hover {
   color: #666;
 }
 
-.login-button {
+.register-button {
   margin-left: 5px;
   font-size: 14px;
   color: #007bff;
   text-decoration: none;
 }
 
-.login-button:hover {
+.register-button:hover {
   text-decoration: underline;
 }
