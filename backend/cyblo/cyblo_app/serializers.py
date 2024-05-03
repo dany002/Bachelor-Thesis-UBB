@@ -28,7 +28,7 @@ class UserSerializer(serializers.ModelSerializer):
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = ['id', 'name', 'user']
+        fields = ['id', 'name', 'description', 'user']
 
 class FileSerializer(serializers.ModelSerializer):
     class Meta:

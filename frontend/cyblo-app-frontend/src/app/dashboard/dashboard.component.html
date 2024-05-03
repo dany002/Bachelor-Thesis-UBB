@@ -1,48 +1,32 @@
-<!-- dashboard.component.html -->
+<div class="container">
+  <div class="header">
+    <div class="header-left">
+      <button mat-raised-button color="primary" (click)="openAddProjectDialog()">Add New Project</button>
+    </div>
+    <div class="header-right">
+      <mat-form-field appearance="fill">
+        <mat-label>Select Project</mat-label>
+        <mat-select>
+          <mat-option *ngFor="let project of projects" [value]="project">{{ project.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <button mat-raised-button color="warn" class="logout-button" (click)="logout()">Logout</button>
+    </div>
+  </div>
 
-<div fxLayout="row" fxLayoutGap="20px" fxLayoutWrap>
-  <div fxFlex.gt-sm="50" fxFlex="100" fxLayout="column">
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Panel 1</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <!-- Panel 1 content -->
-        <p>Data or Metrics</p>
-      </mat-card-content>
-    </mat-card>
+  <div class="content" *ngIf="projects && projects.length > 0; else noProjects">
+    <!-- Display projects -->
+    <div class="project-list">
+      <ul>
+        <li *ngFor="let project of projects" class="project-item">{{ project.name }}</li>
+      </ul>
+    </div>
   </div>
-  <div fxFlex.gt-sm="50" fxFlex="100" fxLayout="column">
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Panel 2</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <!-- Panel 2 content -->
-        <p>Data or Metrics</p>
-      </mat-card-content>
-    </mat-card>
-  </div>
-  <div fxFlex.gt-sm="50" fxFlex="100" fxLayout="column">
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Panel 3</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <!-- Panel 3 content -->
-        <p>Data or Metrics</p>
-      </mat-card-content>
-    </mat-card>
-  </div>
-  <div fxFlex.gt-sm="50" fxFlex="100" fxLayout="column">
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Panel 4</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <!-- Panel 4 content -->
-        <p>Data or Metrics</p>
-      </mat-card-content>
-    </mat-card>
-  </div>
+
+  <ng-template #noProjects>
+    <div class="no-projects">
+      <p>You don't have any projects now. Add your first project!</p>
+      <button mat-raised-button color="primary" (click)="openAddProjectDialog()">Add Project</button>
+    </div>
+  </ng-template>
 </div>

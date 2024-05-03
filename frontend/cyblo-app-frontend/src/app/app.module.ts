@@ -15,13 +15,17 @@ import {MatSnackBarModule} from "@angular/material/snack-bar";
 import { LoginComponent } from './login/login.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import {MatCardModule} from "@angular/material/card";
+import { AddProjectDialogComponent } from './add-project-dialog/add-project-dialog.component';
+import {MatDialogModule} from "@angular/material/dialog";
+import {MatSelectModule} from "@angular/material/select";
 
 @NgModule({
   declarations: [
     AppComponent,
     RegisterComponent,
     LoginComponent,
-    DashboardComponent
+    DashboardComponent,
+    AddProjectDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -36,6 +40,8 @@ import {MatCardModule} from "@angular/material/card";
     HttpClientModule,
     MatSnackBarModule,
     MatCardModule,
+    MatDialogModule,
+    MatSelectModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -1,0 +1,15 @@
+.input-container {
+  margin-bottom: 20px; /* Add some space between input fields */
+}
+
+.mat-form-field {
+  width: 100%; /* Set the input fields to 100% width */
+}
+
+.mat-dialog-content {
+  display: block; /* Remove flex behavior */
+}
+
+.mat-dialog-actions {
+  justify-content: flex-end; /* Align buttons to the right */
+}

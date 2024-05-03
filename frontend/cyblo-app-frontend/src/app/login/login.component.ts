@@ -42,8 +42,8 @@ export class LoginComponent {
           } else if (error.error.error == "Invalid credentials"){
             this.alertService.showError('Invalid credentials!');
           }
-          this.alertService.showError("Please try again!")
-          console.log("Registration failed. Please try again.");
+          this.alertService.showError("Invalid credentials!")
+          console.log("Login failed. Please try again.");
         }
       );
     }

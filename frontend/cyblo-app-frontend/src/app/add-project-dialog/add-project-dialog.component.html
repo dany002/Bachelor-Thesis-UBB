@@ -1,0 +1,21 @@
+<h2 mat-dialog-title>Add Project</h2>
+<mat-dialog-content>
+  <form #projectForm="ngForm">
+    <div class="input-container">
+      <mat-form-field appearance="fill">
+        <mat-label>Name</mat-label>
+        <input matInput name="name" [(ngModel)]="name" required>
+      </mat-form-field>
+    </div>
+    <div class="input-container">
+      <mat-form-field appearance="fill">
+        <mat-label>Description</mat-label>
+        <textarea matInput name="description" [(ngModel)]="description" required></textarea>
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-button color="primary" [disabled]="!projectForm.valid" (click)="onAdd()">Add</button>
+</mat-dialog-actions>
