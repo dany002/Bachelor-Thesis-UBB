@@ -37,12 +37,16 @@ export class LoginComponent {
         },
         (error) => {
           console.log("Login failed:", error.error);
+          console.log(error.error.code);
           if (error.error.error == "Username or email and password are required"){
             this.alertService.showError('Username or email and password are required');
           } else if (error.error.error == "Invalid credentials"){
             this.alertService.showError('Invalid credentials!');
           }
-          this.alertService.showError("Invalid credentials!")
+          else if (error.error.code === 'token_not_valid'){
+            this.apiSrv.logout();
+          }
+          //this.alertService.showError("Invalid credentials!")
           console.log("Login failed. Please try again.");
         }
       );

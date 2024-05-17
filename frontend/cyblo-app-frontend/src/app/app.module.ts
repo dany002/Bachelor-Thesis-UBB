@@ -18,6 +18,8 @@ import {MatCardModule} from "@angular/material/card";
 import { AddProjectDialogComponent } from './add-project-dialog/add-project-dialog.component';
 import {MatDialogModule} from "@angular/material/dialog";
 import {MatSelectModule} from "@angular/material/select";
+import { ChartsModule } from 'ng2-charts';
+
 
 @NgModule({
   declarations: [
@@ -42,6 +44,7 @@ import {MatSelectModule} from "@angular/material/select";
     MatCardModule,
     MatDialogModule,
     MatSelectModule,
+    ChartsModule
   ],
   providers: [],
   bootstrap: [AppComponent]
