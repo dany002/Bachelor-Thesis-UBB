@@ -39,6 +39,12 @@ from django.conf import settings
 #         related_name='cyblo_users'
 #     )
 
+class LogType(Enum):
+    SQL = 'SQL'
+    XSS = 'XSS'
+    DDOS = 'DDOS'
+    ANOMALY = 'Anomaly'
+    NONE = 'None'
 class Project(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
@@ -49,19 +55,16 @@ class File(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='files')
     path = models.TextField(max_length=300)
+    last_checked_size = models.BigIntegerField(default=0)
+    last_checked_time = models.DateTimeField(null=True, blank=True)
+    last_read_position = models.BigIntegerField(default=0)
+    service_account_key = models.TextField(null=True, blank=True)
+    type = models.CharField(choices=[(tag, tag.value) for tag in LogType], max_length=20, default=LogType.NONE.value)
 
-class LogType(Enum):
-    SQL = 'SQL'
-    XSS = 'XSS'
-    DDOS = 'DDOS'
-    ANOMALY = 'Anomaly'
-    NONE = 'None'
 
 class Log(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     timestamp = models.DateTimeField()
     query = models.TextField()
     file = models.ForeignKey(File, on_delete=models.SET_NULL, null=True, related_name='logs')
-    type = models.CharField(choices=[(tag, tag.value) for tag in LogType], max_length=20)
     level = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(10)])
-

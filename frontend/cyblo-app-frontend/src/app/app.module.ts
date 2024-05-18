@@ -18,7 +18,9 @@ import {MatCardModule} from "@angular/material/card";
 import { AddProjectDialogComponent } from './add-project-dialog/add-project-dialog.component';
 import {MatDialogModule} from "@angular/material/dialog";
 import {MatSelectModule} from "@angular/material/select";
-import { ChartsModule } from 'ng2-charts';
+import { NgChartsModule } from 'ng2-charts';
+import { SqlInjectionChartComponent } from './sql-injection-chart/sql-injection-chart.component';
+import { AddFileDialogComponent } from './add-file-dialog/add-file-dialog.component';
 
 
 @NgModule({
@@ -27,7 +29,9 @@ import { ChartsModule } from 'ng2-charts';
     RegisterComponent,
     LoginComponent,
     DashboardComponent,
-    AddProjectDialogComponent
+    AddProjectDialogComponent,
+    SqlInjectionChartComponent,
+    AddFileDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -44,7 +48,7 @@ import { ChartsModule } from 'ng2-charts';
     MatCardModule,
     MatDialogModule,
     MatSelectModule,
-    ChartsModule
+    NgChartsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

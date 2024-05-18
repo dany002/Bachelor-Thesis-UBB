@@ -2,11 +2,12 @@
   <div class="header">
     <div class="header-left">
       <button mat-raised-button color="primary" (click)="openAddProjectDialog()">Add New Project</button>
+      <button mat-raised-button color="accent" (click)="openAddFileDialog()">Add New File</button>
     </div>
     <div class="header-right">
       <mat-form-field appearance="fill">
         <mat-label>Select Project</mat-label>
-        <mat-select>
+        <mat-select [(ngModel)]="selectedProject" (selectionChange)="onProjectSelectionChange()">
           <mat-option *ngFor="let project of projects" [value]="project">{{ project.name }}</mat-option>
         </mat-select>
       </mat-form-field>
@@ -21,6 +22,7 @@
         <li *ngFor="let project of projects" class="project-item">{{ project.name }}</li>
       </ul>
     </div>
+    <app-sql-injection-chart *ngIf="selectedFileIdSQL" [fileIdSQL]="selectedFileIdSQL"></app-sql-injection-chart>
   </div>
 
   <ng-template #noProjects>
