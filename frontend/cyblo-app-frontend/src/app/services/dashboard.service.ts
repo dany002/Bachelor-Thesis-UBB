@@ -36,4 +36,8 @@ export class DashboardService {
     return this.http.post<any>(`${this.backendUrl}/files/add`, file, { withCredentials: true });
   }
 
+  getLogsForAFile(id: string | undefined): Observable<any> {
+    return this.http.get(`${this.backendUrl}/files/${id}`, { withCredentials: true });
+  }
+
 }

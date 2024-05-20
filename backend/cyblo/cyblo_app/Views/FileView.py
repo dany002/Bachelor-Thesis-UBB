@@ -5,7 +5,7 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from cyblo.cyblo_app.models import File
+from cyblo.cyblo_app.models import File, Log
 from cyblo.cyblo_app.serializers import FileSerializer, LogSerializer
 
 
@@ -81,3 +81,13 @@ def detect_sql_injection(sql_query):
         return True
 
     return False
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_logs(request, file_id):
+    try:
+        logs = Log.objects.filter(file_id=file_id)
+        serializer = LogSerializer(logs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Log.DoesNotExist:
+        return Response({'detail': 'Logs not found'}, status=status.HTTP_404_NOT_FOUND)
