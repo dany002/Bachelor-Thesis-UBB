@@ -3,6 +3,7 @@ import { ChartData, ChartOptions } from 'chart.js';
 import { DashboardService } from '../services/dashboard.service';
 import 'chartjs-adapter-moment';
 import * as moment from 'moment';
+import {Log} from "../models/Log";
 
 @Component({
   selector: 'app-sql-injection-chart',
@@ -12,35 +13,43 @@ import * as moment from 'moment';
 export class SqlInjectionChartComponent implements OnInit, AfterViewInit {
   @Input() fileIdSQL: string | undefined;
 
-  public lineChartData: ChartData<'line'> = {
+  public barChartData: ChartData<'bar'> = {
     labels: [],
     datasets: [
       {
         data: [],
+        label: 'No SQL Injection Detected',
+        backgroundColor: 'blue'
+      },
+      {
+        data: [],
         label: 'SQL Injection Detected',
-        borderWidth: 2,
-        pointRadius: 2
+        backgroundColor: 'red'
       }
     ]
   };
 
-  public lineChartOptions: ChartOptions<'line'> = {
+  public barChartOptions: ChartOptions<'bar'> = {
     responsive: true,
     scales: {
       x: {
-        type: 'time',
+        type: 'timeseries',
         time: {
           unit: 'hour',
           displayFormats: {
-            hour: 'h:mm a'
+            hour: 'MMM D, h:mm a (TIMESTAMP)'
           }
+        },
+        title: {
+          display: true,
+          text: 'Timestamp'
         }
       },
       y: {
         beginAtZero: true,
         title: {
           display: true,
-          text: 'Suspicion Level'
+          text: 'Number of Logs'
         }
       }
     }
@@ -49,7 +58,6 @@ export class SqlInjectionChartComponent implements OnInit, AfterViewInit {
   constructor(private dashboardService: DashboardService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    console.log('ngOnInit: Initializing component');
     if (this.fileIdSQL) {
       this.fetchData();
     } else {
@@ -58,23 +66,32 @@ export class SqlInjectionChartComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    console.log('ngAfterViewInit: View initialized');
     this.cdr.detectChanges();  // Ensure change detection after view init
   }
 
+  loadHardcodedData(): void {
+    const sampleTimestamps = [
+      new Date('2024-05-18T10:00:00Z'),
+      new Date('2024-05-18T11:00:00Z'),
+      new Date('2024-05-18T12:00:00Z')
+    ];
+
+    const sampleSuspicions = [2, 5, 8];
+
+    //this.updateChartData(sampleTimestamps, sampleSuspicions);
+  }
+
   fetchData(): void {
-    if (this.fileIdSQL != undefined) {
-      console.log('fetchData: Fetching data for fileIdSQL:', this.fileIdSQL);
+    if (this.fileIdSQL) {
       this.dashboardService.refreshChartSQLForASpecificFile(this.fileIdSQL).subscribe(
         (response) => {
-          console.log('fetchData: Refresh response:', response);
           if (response.detail === "File processed successfully") {
             this.dashboardService.getLogsForAFile(this.fileIdSQL).subscribe(
-              (logs) => {
-                console.log('fetchData: Logs fetched:', logs);
-                const { timestamps, suspicions } = this.aggregateData(logs);
-                this.updateChartData(timestamps, suspicions);
-              },
+                (logs: Log[]) => {
+                  // Extract timestamps from logs
+                  const timestamps = logs.map(log => new Date(log.timestamp));
+                  this.updateChartData(timestamps, logs);
+                },
               (error) => {
                 console.error('Error fetching logs:', error);
               }
@@ -90,34 +107,53 @@ export class SqlInjectionChartComponent implements OnInit, AfterViewInit {
     }
   }
 
-  loadHardcodedData(): void {
-    console.log('loadHardcodedData: Loading hardcoded data');
-    const sampleTimestamps = [
-      new Date('2024-05-18T10:00:00Z'),
-      new Date('2024-05-18T11:00:00Z'),
-      new Date('2024-05-18T12:00:00Z')
-    ];
 
-    const sampleSuspicions = [2, 5, 8];
+  // updateChartData(timestamps: Date[], logs: Log[]): void {
+  //   // Group logs by suspicion level
+  //   const groupedLogs = logs.reduce((acc, log) => {
+  //     const key = log.level === 0 ? 'level0' : 'level10';
+  //     if (!acc[key]) {
+  //       acc[key] = [];
+  //     }
+  //     acc[key].push(log);
+  //     return acc;
+  //   }, {} as { [key: string]: Log[] });
+  //
+  //   // Count logs for each level
+  //   const zeroSuspicions = groupedLogs['level0'] ? groupedLogs['level0'].length : 0;
+  //   const tenSuspicions = groupedLogs['level10'] ? groupedLogs['level10'].length : 0;
+  //   console.log(zeroSuspicions);
+  //   console.log(tenSuspicions)
+  //   // Update the dataset with the new values
+  //   this.barChartData.datasets[0].data = [zeroSuspicions];
+  //   this.barChartData.datasets[1].data = [tenSuspicions];
+  //
+  //   // Force change detection and chart redraw
+  //   this.cdr.detectChanges();
+  //   setTimeout(() => {
+  //     this.cdr.markForCheck();
+  //   }, 0);
+  // }
 
-    this.updateChartData(sampleTimestamps, sampleSuspicions);
-  }
+  updateChartData(timestamps: Date[], logs: Log[]): void {
+    const zeroSuspicions = logs.filter(log => log.level === 0).length;
+    const tenSuspicions = logs.filter(log => log.level === 10).length;
 
-  updateChartData(timestamps: Date[], suspicions: number[]): void {
-    console.log('updateChartData: Updating chart data');
-    this.lineChartData.labels = timestamps as unknown as string[];
-    this.lineChartData.datasets[0].data = suspicions;
+    this.barChartData.labels = timestamps.map(timestamp => moment(timestamp).format('MMM D, h:mm a'));
+    console.log(timestamps);
+    this.barChartData.datasets[0].data = [zeroSuspicions];
+    this.barChartData.datasets[1].data = [tenSuspicions];
 
     // Force change detection and chart redraw
     this.cdr.detectChanges();
     setTimeout(() => {
-      console.log('updateChartData: Triggering markForCheck');
       this.cdr.markForCheck();
     }, 0);
   }
 
+
+
   aggregateData(logs: any[]): { timestamps: Date[], suspicions: number[] } {
-    console.log('aggregateData: Aggregating data');
     const aggregatedData: { [key: string]: { sum: number, count: number } } = {};
 
     logs.forEach(log => {
@@ -136,9 +172,6 @@ export class SqlInjectionChartComponent implements OnInit, AfterViewInit {
       timestamps.push(new Date(timestamp));
       suspicions.push(aggregatedData[timestamp].sum / aggregatedData[timestamp].count);
     }
-
-    console.log('aggregateData: Aggregated timestamps:', timestamps);
-    console.log('aggregateData: Aggregated suspicions:', suspicions);
 
     return { timestamps, suspicions };
   }
