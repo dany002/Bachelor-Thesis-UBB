@@ -3,6 +3,7 @@
     <div class="header-left">
       <button mat-raised-button color="primary" (click)="openAddProjectDialog()">Add New Project</button>
       <button mat-raised-button color="accent" (click)="openAddFileDialog()">Add New File</button>
+      <button mat-raised-button color="warn" (click)="openAddConnectionDialog()">Add New Connection</button>
     </div>
     <div class="header-right">
       <mat-form-field appearance="fill">
@@ -11,17 +12,24 @@
           <mat-option *ngFor="let project of projects" [value]="project">{{ project.name }}</mat-option>
         </mat-select>
       </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Select Connection</mat-label>
+        <mat-select [(ngModel)]="selectedConnection" (selectionChange)="onConnectionSelectionChange()">
+          <mat-option *ngFor="let connection of connections" [value]="connection">{{ connection.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Select Option</mat-label>
+        <mat-select [(ngModel)]="selectedOption" (selectionChange)="onOptionSelectionChange()">
+          <mat-option value="AI">AI</mat-option>
+          <mat-option value="Regex">Regex</mat-option>
+        </mat-select>
+      </mat-form-field>
       <button mat-raised-button color="warn" class="logout-button" (click)="logout()">Logout</button>
     </div>
   </div>
 
   <div class="content" *ngIf="projects && projects.length > 0; else noProjects">
-    <!-- Display projects -->
-    <div class="project-list">
-      <ul>
-        <li *ngFor="let project of projects" class="project-item">{{ project.name }}</li>
-      </ul>
-    </div>
     <app-sql-injection-chart *ngIf="selectedFileIdSQL" [fileIdSQL]="selectedFileIdSQL"></app-sql-injection-chart>
   </div>
 
@@ -31,5 +39,10 @@
       <button mat-raised-button color="primary" (click)="openAddProjectDialog()">Add Project</button>
     </div>
   </ng-template>
-</div>
 
+  <div class="manage-buttons">
+    <button mat-raised-button color="primary" (click)="openManageDialog('projects')">Manage Projects</button>
+    <button mat-raised-button color="primary" (click)="openManageDialog('files')">Manage Files</button>
+    <button mat-raised-button color="primary" (click)="openManageDialog('connections')">Manage Connections</button>
+  </div>
+</div>

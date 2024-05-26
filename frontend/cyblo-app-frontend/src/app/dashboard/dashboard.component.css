@@ -2,6 +2,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  /*margin: 0 auto;*/
+  /*padding: 0 100px*/
 }
 
 .header {
@@ -34,4 +36,18 @@
 
 .logout-button {
   margin-left: 40px; /* Adjust the space between the logout button and the dropdown */
+}
+
+.manage-buttons {
+  position: fixed;
+  left: 10px;
+  top: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Space between buttons */
+  padding: 100px 100px;
+}
+
+.manage-buttons button {
+  margin-bottom: 10px; /* Additional space between buttons */
 }

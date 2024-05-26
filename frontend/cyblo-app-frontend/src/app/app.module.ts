@@ -21,6 +21,10 @@ import {MatSelectModule} from "@angular/material/select";
 import { NgChartsModule } from 'ng2-charts';
 import { SqlInjectionChartComponent } from './sql-injection-chart/sql-injection-chart.component';
 import { AddFileDialogComponent } from './add-file-dialog/add-file-dialog.component';
+import { AddConnectionDialogComponent } from './add-connection-dialog/add-connection-dialog.component';
+import { ManageEntitiesDialogComponent } from './manage-entities-dialog/manage-entities-dialog.component';
+import { EditProjectDialogComponent } from './edit-project-dialog/edit-project-dialog.component';
+import { DeleteEntityDialogComponent } from './delete-entity-dialog/delete-entity-dialog.component';
 
 
 @NgModule({
@@ -31,7 +35,11 @@ import { AddFileDialogComponent } from './add-file-dialog/add-file-dialog.compon
     DashboardComponent,
     AddProjectDialogComponent,
     SqlInjectionChartComponent,
-    AddFileDialogComponent
+    AddFileDialogComponent,
+    AddConnectionDialogComponent,
+    ManageEntitiesDialogComponent,
+    EditProjectDialogComponent,
+    DeleteEntityDialogComponent
   ],
   imports: [
     BrowserModule,

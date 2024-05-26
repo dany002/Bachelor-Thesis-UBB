@@ -6,38 +6,10 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from django.conf import settings
+from rest_framework.exceptions import ValidationError
+
 
 # A user can have multiple projects. A project has multiple Files. Each file contains multiple logs. Each log can have multiple types
-
-
-
-# class User(AbstractUser):
-#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-#     class Meta:
-#         db_table = 'cyblo_user'
-#
-#     # Define intermediary models for the ManyToManyField relationships
-#     class UserGroup(models.Model):
-#         user = models.ForeignKey('User', on_delete=models.CASCADE)
-#         group = models.ForeignKey(Group, on_delete=models.CASCADE)
-#
-#     class UserPermission(models.Model):
-#         user = models.ForeignKey('User', on_delete=models.CASCADE)
-#         permission = models.ForeignKey(Permission, on_delete=models.CASCADE)
-#
-#     # Specify unique related_name for groups and user_permissions
-#     groups = models.ManyToManyField(
-#         Group,
-#         through=UserGroup,
-#         through_fields=('user', 'group'),
-#         related_name='cyblo_users'
-#     )
-#     user_permissions = models.ManyToManyField(
-#         Permission,
-#         through=UserPermission,
-#         through_fields=('user', 'permission'),
-#         related_name='cyblo_users'
-#     )
 
 class LogType(Enum):
     SQL = 'SQL'
@@ -62,9 +34,29 @@ class File(models.Model):
     type = models.CharField(choices=[(tag, tag.value) for tag in LogType], max_length=20, default=LogType.NONE.value)
 
 
+class ExternalDBConnection(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100)
+    host = models.CharField(max_length=100)
+    port = models.IntegerField()
+    username = models.CharField(max_length=100)
+    password = models.CharField(max_length=100)
+    database = models.CharField(max_length=100)
+    project = models.ForeignKey('Project', on_delete=models.CASCADE, related_name='external_db_connections', default=None)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='external_db_connections', default=None)
+
 class Log(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     timestamp = models.DateTimeField()
     query = models.TextField()
-    file = models.ForeignKey(File, on_delete=models.SET_NULL, null=True, related_name='logs')
+    log_type = models.CharField(choices=[(tag, tag.value) for tag in LogType], max_length=20, default=LogType.NONE.value)
+    file = models.ForeignKey(File, on_delete=models.SET_NULL, null=True, blank=True, related_name='logs')
+    external_connection = models.ForeignKey(ExternalDBConnection, on_delete=models.SET_NULL, null=True, blank=True, related_name='logs')
     level = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(10)])
+
+    def clean(self):
+        if self.file_id is None and self.external_connection_id is None:
+            raise ValidationError('Either file or external connection must be specified.')
+        elif self.file_id is not None and self.external_connection_id is not None:
+            raise ValidationError('Log cannot be associated with both a file and an external connection.')
+

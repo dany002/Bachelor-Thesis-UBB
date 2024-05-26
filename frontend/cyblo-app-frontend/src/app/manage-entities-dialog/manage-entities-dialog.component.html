@@ -1,0 +1,35 @@
+<h1 mat-dialog-title>Manage {{ entityType | titlecase }}</h1>
+
+<div mat-dialog-content>
+  <button mat-raised-button color="primary" (click)="addEntity()">
+    <mat-icon>add</mat-icon> <!-- Icon for add -->
+  </button>
+  <ol>
+    <li *ngFor="let entity of entities" class="entity-item">
+      <div class="entity-details">
+        <div *ngIf="entityType === 'projects'">
+          <p><strong>Name:</strong> {{ entity.name }}</p>
+          <p><strong>Description:</strong> {{ entity.description }}</p>
+        </div>
+        <div *ngIf="entityType === 'files'">
+          <p><strong>Last Checked size:</strong> {{ entity.last_checked_size }}</p>
+          <p><strong>Last Checked time:</strong> {{ entity.last_checked_time }}</p>
+          <p><strong>Path:</strong> {{ entity.path }}</p>
+          <p><strong>Type:</strong> {{ entity.type }}</p>
+          <p><strong>Project:</strong> {{entity.project.name}}</p>
+        </div>
+      </div>
+      <span class="entity-actions">
+        <button mat-icon-button (click)="updateEntity(entity)">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button (click)="deleteEntity(entity)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </span>
+    </li>
+  </ol>
+</div>
+<div mat-dialog-actions>
+  <button mat-button (click)="closeDialog()">Close</button>
+</div>

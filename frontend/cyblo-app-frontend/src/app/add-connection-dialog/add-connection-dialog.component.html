@@ -1,0 +1,45 @@
+<h2 mat-dialog-title>Add New Connection</h2>
+<mat-dialog-content>
+  <form #connectionForm="ngForm">
+    <div class="input-container">
+      <mat-form-field appearance="fill" class="mat-form-field-wrapper">
+        <mat-label>Name</mat-label>
+        <input matInput name="name" [(ngModel)]="name" required>
+      </mat-form-field>
+    </div>
+    <div class="input-container">
+      <mat-form-field appearance="fill" class="mat-form-field-wrapper">
+        <mat-label>Host</mat-label>
+        <input matInput name="host" [(ngModel)]="host" required>
+      </mat-form-field>
+    </div>
+    <div class="input-container">
+      <mat-form-field appearance="fill" class="mat-form-field-wrapper">
+        <mat-label>Port</mat-label>
+        <input matInput name="port" [(ngModel)]="port" required>
+      </mat-form-field>
+    </div>
+    <div class="input-container">
+      <mat-form-field appearance="fill" class="mat-form-field-wrapper">
+        <mat-label>Username</mat-label>
+        <input matInput name="username" [(ngModel)]="username" required>
+      </mat-form-field>
+    </div>
+    <div class="input-container">
+      <mat-form-field appearance="fill" class="mat-form-field-wrapper">
+        <mat-label>Password</mat-label>
+        <input matInput name="password" [(ngModel)]="password" required>
+      </mat-form-field>
+    </div>
+    <div class="input-container">
+      <mat-form-field appearance="fill" class="mat-form-field-wrapper">
+        <mat-label>Database</mat-label>
+        <input matInput name="database" [(ngModel)]="database" required>
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-button color="primary" [disabled]="!connectionForm.valid" (click)="onAdd()">Save</button>
+</mat-dialog-actions>

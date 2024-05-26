@@ -5,7 +5,9 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from cyblo.cyblo_app.models import File, Log
+from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
+
+from cyblo.cyblo_app.models import File, Log, Project
 from cyblo.cyblo_app.serializers import FileSerializer, LogSerializer
 
 
@@ -17,6 +19,18 @@ class FileList(generics.ListCreateAPIView):
 class FileDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = File.objects.all()
     serializer_class = FileSerializer
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_files_for_a_specific_user(request):
+    user = request.user
+    files = File.objects.filter(project__user=user)
+    if files.exists():
+        serializer = FileSerializer(files, many=True)
+        return Response(serializer.data, status=HTTP_200_OK)
+    else:
+        return Response({"detail": "No files found for the user."}, status=HTTP_404_NOT_FOUND)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

@@ -10,11 +10,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.test import APIRequestFactory
-
 from cyblo.cyblo_app.models import Project, LogType, File
 from cyblo.cyblo_app.permissions import IsOwner
 from cyblo.cyblo_app.serializers import ProjectSerializer, FileSerializer
-
+from django.contrib.auth.models import User
 
 class ProjectList(generics.ListCreateAPIView):
     queryset = Project.objects.all()
@@ -45,7 +44,6 @@ def add_project(request):
         'description': request.data.get('description'),
         'user': request.user.id,
     }
-
     project_serializer = ProjectSerializer(data=project_data)
 
     try:
@@ -54,40 +52,38 @@ def add_project(request):
         return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     project = project_serializer.save(user=request.user)
+    serialized_project = ProjectSerializer(project).data  # Serialize the project
 
-    file_type = request.data.get('type', LogType.NONE.value)
+    return Response(serialized_project, status=status.HTTP_201_CREATED)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def edit_project(request):
+    project_id = request.data.get('id')
     try:
-        log_type = LogType[file_type]  # Convert the string to LogType enum
-    except KeyError:
-        return Response({'detail': f'Invalid log type: {file_type}'}, status=status.HTTP_400_BAD_REQUEST)
+        # Retrieve the existing project instance
+        project = Project.objects.get(id=project_id, user=request.user.id)
+    except Project.DoesNotExist:
+        return Response({'detail': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
 
+    # Update the project fields with the new data
 
-    file_data = {
-        'project': project.id,
-        'path': request.data.get('path'),
-        'last_checked_time': timezone.now(),
-        'last_checked_size': 0,
-        'last_read_position': 0,
-        'service_account_key': request.data.get('service_account_key'),
-        'type': log_type.value
-    }
+    project_data = request.data
+    project_data['user'] = request.user.id
+    # Validate and save the updated project instance
+    print(project_data)
+    project_serializer = ProjectSerializer(instance=project, data=project_data)
+    try:
+        project_serializer.is_valid(raise_exception=True)
+    except Exception as e:
+        return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    factory = APIRequestFactory()
-    add_file_request = factory.post('/api/files/add', file_data, format='json')
-    add_file_request.user = request.user
+    project_serializer.save()
 
-    if 'HTTP_AUTHORIZATION' in request.META:
-        add_file_request.META['HTTP_AUTHORIZATION'] = request.META['HTTP_AUTHORIZATION']
-    elif 'Authorization' in request.headers:
-        add_file_request.META['HTTP_AUTHORIZATION'] = request.headers['Authorization']
-
-    response = add_file(add_file_request)
-
-    if response.status_code != status.HTTP_201_CREATED:
-        project.delete()
-        return response
-
-    return Response(response.data, status=status.HTTP_201_CREATED)
+    # Serialize the updated project and return the response
+    serialized_project = ProjectSerializer(project).data
+    return Response(serialized_project, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -95,13 +91,13 @@ def add_project(request):
 def add_file(request):
     file_data = request.data.copy()
     file_serializer = FileSerializer(data=file_data)
+
     try:
         file_serializer.is_valid(raise_exception=True)
     except Exception as e:
         return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    file_type = file_data.get('type', LogType.NONE.value)
-    print(file_type)
 
+    file_type = file_data.get('type', LogType.NONE.value)
     try:
         log_type = file_type
     except KeyError:
@@ -115,7 +111,8 @@ def add_file(request):
 
     if not download_response['success']:
         file.delete()
-        return Response({'detail': 'Failed to download file from GCS: ' + download_response['error']}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'detail': 'Failed to download file from GCS: ' + download_response['error']},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     file.last_checked_size = download_response['last_checked_size']
     file.last_checked_time = download_response['last_checked_time']
@@ -123,6 +120,17 @@ def add_file(request):
 
     return Response(file_serializer.data, status=status.HTTP_201_CREATED)
 
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_project(request, project_id):
+    try:
+        # Retrieve the project instance to be deleted
+        project = get_object_or_404(Project, id=project_id, user=request.user)
+        project.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except Exception as e:
+        return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

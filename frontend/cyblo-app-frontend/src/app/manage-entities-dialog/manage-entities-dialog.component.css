@@ -1,0 +1,37 @@
+.add-button {
+  margin-bottom: 20px;
+}
+
+.entity-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.entity-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.entity-details p {
+  margin: 0;
+  padding: 4px 0;
+}
+
+.entity-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mat-dialog-content {
+  padding-bottom: 20px;
+}
+
+.mat-dialog-actions {
+  justify-content: flex-end;
+  margin-top: 20px;
+}

@@ -12,10 +12,6 @@ import {AlertService} from "../services/alert.service";
 export class AddProjectDialogComponent {
   name: string = '';
   description: string = '';
-  path: string = '';
-  service_account_key: string = '';
-  type: string = '';
-  fileTypes: string[] = ['SQL', 'DDOS', 'XSS', 'Anomaly', 'None'];
 
   constructor(public dialogRef: MatDialogRef<AddProjectDialogComponent>, private dashboardService: DashboardService, private alertService: AlertService) {}
 
@@ -27,7 +23,6 @@ export class AddProjectDialogComponent {
 
     const nameRegex = /^[a-zA-Z\s]+$/;
     const descriptionRegex = /^[a-zA-Z0-9'".,\s]+$/;
-    const pathRegex = /^gs:\/\/.*/;
 
     if (!nameRegex.test(this.name)) {
       console.error('Invalid project name');
@@ -41,13 +36,7 @@ export class AddProjectDialogComponent {
       return;
     }
 
-    if (!pathRegex.test(this.path)) {
-      console.error('Invalid path');
-      this.alertService.showError('Invalid path. It should start with "gs://".');
-      return;
-    }
-
-    const projectToBeAdded: AddProject = { name: this.name, description: this.description, path: this.path, service_account_key: this.service_account_key, type: this.type };
+    const projectToBeAdded: AddProject = { name: this.name, description: this.description };
 
     this.dashboardService.addProject(projectToBeAdded).subscribe(
       (response) => {

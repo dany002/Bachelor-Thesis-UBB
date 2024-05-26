@@ -1,11 +1,14 @@
 import {Component, OnInit} from '@angular/core';
 import {DashboardService} from "../services/dashboard.service";
-import {Project} from "../models/Project";
+import {Project} from "../models/Project"
 import {MatDialog} from "@angular/material/dialog";
 import {AddProjectDialogComponent} from "../add-project-dialog/add-project-dialog.component";
 import {File} from "../models/File";
 import {AddFileDialogComponent} from "../add-file-dialog/add-file-dialog.component";
 import {AlertService} from "../services/alert.service";
+import {AddConnectionDialogComponent} from "../add-connection-dialog/add-connection-dialog.component";
+import {Connection} from "../models/Connection";
+import {ManageEntitiesDialogComponent} from "../manage-entities-dialog/manage-entities-dialog.component";
 
 @Component({
   selector: 'app-dashboard',
@@ -16,6 +19,9 @@ export class DashboardComponent implements OnInit{
   projects: Project[] | undefined;
   selectedProject: Project | undefined;
   selectedFileIdSQL: string | undefined;
+  connections: Connection[] | undefined;
+  selectedConnection: Connection | undefined;
+  selectedOption: string | undefined;
 
   ngOnInit() {
     this.getProjects();
@@ -41,6 +47,26 @@ export class DashboardComponent implements OnInit{
     );
   }
 
+  getConnectionsForAProject() {
+    if(this.selectedProject != undefined){
+      this.dashboardService.getConnectionsForAProject(this.selectedProject.id).subscribe(
+        (response) => {
+          if (response && response.length > 0) {
+            console.log('Connections:', response);
+            this.connections = response;
+          } else {
+            console.log('No connections found');
+            this.connections = [];
+            this.selectedConnection = undefined;
+          }
+        },
+        (error) => {
+          console.error('Error:', error);
+        }
+      );
+    }
+  }
+
   openAddProjectDialog(): void {
     const dialogRef = this.dialog.open(AddProjectDialogComponent, {
       width: '600px'
@@ -55,6 +81,7 @@ export class DashboardComponent implements OnInit{
 
   onProjectSelectionChange(): void {
     if (this.selectedProject) {
+      this.getConnectionsForAProject();
       const projectId = this.selectedProject.id;
       this.dashboardService.getFilesByProjectId(projectId).subscribe(
         (response: File[]) => { // Assuming 'File' is the interface for your file model
@@ -96,6 +123,52 @@ export class DashboardComponent implements OnInit{
     else{
       this.alertService.showError('Select First the project.');
     }
+  }
 
+
+  openAddConnectionDialog() {
+    if(this.selectedProject != undefined){
+      const dialogRef = this.dialog.open(AddConnectionDialogComponent, {
+        width: '600px',
+        data: { projectId: this.selectedProject.id }
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result) {
+          this.getProjects();
+        }
+      });
+    }
+    else{
+      this.alertService.showError('Select First the project.');
+    }
+  }
+
+  onConnectionSelectionChange() {
+
+  }
+
+  onOptionSelectionChange() {
+
+  }
+
+  openManageDialog(entityType: string) {
+    const dialogRef = this.dialog.open(ManageEntitiesDialogComponent, {
+      width: '800px',
+      data: { entityType }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        // Refresh data based on the managed entity type
+        if (entityType === 'projects') {
+          this.getProjects();
+        } else if (entityType === 'files') {
+          // Logic to refresh files
+        } else if (entityType === 'connections') {
+          this.getConnectionsForAProject();
+        }
+      }
+    });
   }
 }

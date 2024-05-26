@@ -1,4 +1,4 @@
-<h2 mat-dialog-title>Add Project</h2>
+<h2 mat-dialog-title>Add File</h2>
 <mat-dialog-content>
   <form #fileForm="ngForm">
     <div class="input-container">
@@ -20,6 +20,14 @@
         <mat-label>Type of File</mat-label>
         <mat-select name="type" [(ngModel)]="type" required>
           <mat-option *ngFor="let option of fileTypes" [value]="option">{{ option }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="input-container">
+      <mat-form-field appearance="fill" class="mat-form-field-wrapper">
+        <mat-label>Project</mat-label>
+        <mat-select name="project" [(ngModel)]="project" required>
+          <mat-option *ngFor="let project of projects" [value]="project">{{ project.name }}</mat-option>
         </mat-select>
       </mat-form-field>
     </div>
