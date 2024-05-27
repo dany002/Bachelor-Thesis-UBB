@@ -1,10 +1,10 @@
 <div class="container">
   <div class="header">
-    <div class="header-left">
-      <button mat-raised-button color="primary" (click)="openAddProjectDialog()">Add New Project</button>
-      <button mat-raised-button color="accent" (click)="openAddFileDialog()">Add New File</button>
-      <button mat-raised-button color="warn" (click)="openAddConnectionDialog()">Add New Connection</button>
-    </div>
+<!--    <div class="header-left">-->
+<!--      <button mat-raised-button color="primary" (click)="openAddProjectDialog()">Add New Project</button>-->
+<!--      <button mat-raised-button color="accent" (click)="openAddFileDialog()">Add New File</button>-->
+<!--      <button mat-raised-button color="warn" (click)="openAddConnectionDialog()">Add New Connection</button>-->
+<!--    </div>-->
     <div class="header-right">
       <mat-form-field appearance="fill">
         <mat-label>Select Project</mat-label>
@@ -19,6 +19,12 @@
         </mat-select>
       </mat-form-field>
       <mat-form-field appearance="fill">
+        <mat-label>Select Table</mat-label>
+        <mat-select [(ngModel)]="selectedTable" (selectionChange)="onTableSelectionChange()">
+          <mat-option *ngFor="let table of tables" [value]="table">{{ table }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
         <mat-label>Select Option</mat-label>
         <mat-select [(ngModel)]="selectedOption" (selectionChange)="onOptionSelectionChange()">
           <mat-option value="AI">AI</mat-option>
@@ -30,7 +36,11 @@
   </div>
 
   <div class="content" *ngIf="projects && projects.length > 0; else noProjects">
-    <app-sql-injection-chart *ngIf="selectedFileIdSQL" [fileIdSQL]="selectedFileIdSQL"></app-sql-injection-chart>
+    <app-sql-injection-chart
+      *ngIf="selectedTable && selectedConnectionId"
+      [selectedTable]="selectedTable"
+      [connectionId]="selectedConnectionId">
+    </app-sql-injection-chart>
   </div>
 
   <ng-template #noProjects>

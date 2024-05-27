@@ -1,4 +1,12 @@
+import json
+import pickle
+
+import psycopg2
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from psycopg2 import sql
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -120,3 +128,110 @@ def delete_connection(request, connection_id):
         return Response(status=status.HTTP_204_NO_CONTENT)
     except Exception as e:
         return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_tables_for_a_connection(request, connection_id):
+    try:
+        # Retrieve the connection information from the database
+        connection = ExternalDBConnection.objects.get(id=connection_id)
+        connection_data = ExternalDBConnectionSerializer(connection).data
+        # Extract connection details
+        dbname = connection_data['database']
+        user = connection_data['username']
+        password = connection_data['password']
+        host = connection_data['host']
+        port = connection_data['port']
+
+        # Connect to the PostgreSQL database
+        conn = psycopg2.connect(
+            dbname=dbname,
+            user=user,
+            password=password,
+            host=host,
+            port=port
+        )
+
+        # Create a cursor object
+        cursor = conn.cursor()
+
+        # Execute the SQL query to fetch all table names
+        cursor.execute(
+            sql.SQL(
+                "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';"
+            )
+        )
+
+        # Fetch all table names
+        tables = cursor.fetchall()
+
+        # Close the cursor and connection
+        cursor.close()
+        conn.close()
+
+        # Extract table names from the query result
+        table_names = [table[0] for table in tables]
+
+        # Return the list of table names in the response
+        return Response({'tables': table_names}, status=status.HTTP_200_OK)
+
+    except ExternalDBConnection.DoesNotExist:
+        return Response({'detail': 'Connection not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+with open('models/tokenizer_sql.pickle', 'rb') as handle:
+    tokenizer = pickle.load(handle)
+model = load_model('models/best_model.h5')
+max_len = 544  # Replace this with the max_len value used during training
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_records(request):
+    data = json.loads(request.body)
+    table = data.get('table')
+    offset = int(data.get('offset', 0))
+    connection_id = data.get('connection_id')
+
+    if not connection_id:
+        return JsonResponse({'error': 'Connection ID is required'}, status=400)
+
+    try:
+        connection_details = ExternalDBConnection.objects.get(id=connection_id)
+    except ExternalDBConnection.DoesNotExist:
+        return JsonResponse({'error': 'Invalid connection ID'}, status=400)
+
+    try:
+        # Establish a connection to the external database
+        conn = psycopg2.connect(
+            host=connection_details.host,
+            port=connection_details.port,
+            user=connection_details.username,
+            password=connection_details.password,
+            database=connection_details.database
+        )
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT query, timestamp FROM {table} ORDER BY timestamp LIMIT 100 OFFSET %s", [offset])
+        records = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        records = [{'query': record[0], 'timestamp': record[1]} for record in records]
+
+        # Preprocess and predict
+        queries = [record['query'] for record in records]
+        X_seq = tokenizer.texts_to_sequences(queries)
+        X_pad = pad_sequences(X_seq, maxlen=max_len, padding='post')
+        predictions = model.predict(X_pad)
+        binary_predictions = (predictions > 0.5).astype(int).squeeze()
+
+        # Add predictions to records
+        for i, record in enumerate(records):
+            record['prediction'] = int(binary_predictions[i])
+
+        return JsonResponse({'records': records})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

@@ -7,7 +7,7 @@ from cyblo.cyblo_app.Views.ProjectView import get_user_projects, add_project, ad
     get_files_for_a_specific_project, edit_project, delete_project
 from cyblo.cyblo_app.Views.UserView import RegisterUser, LogoutUser, LoginUser, get_token_expiration
 from cyblo.cyblo_app.Views.UtilsView import create_external_db_connection, get_connections_for_a_project, \
-    get_connections_for_a_specific_user, edit_connection, delete_connection
+    get_connections_for_a_specific_user, edit_connection, delete_connection, get_tables_for_a_connection, get_records
 
 urlpatterns = [
     path('register', RegisterUser.as_view(), name='register-user'),
@@ -31,4 +31,6 @@ urlpatterns = [
     path('connections', get_connections_for_a_specific_user, name='get_connections_for_a_specific_user'),
     path('connections/edit', edit_connection, name='edit_connection'),
     path('connections/delete/<uuid:connection_id>', delete_connection, name='delete_connection'),
+    path('connections/<uuid:connection_id>/tables', get_tables_for_a_connection, name='get_tables_for_a_connection'),
+    path('get-records', get_records, name='get_records'),
 ]

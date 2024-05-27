@@ -9,6 +9,7 @@ import {AlertService} from "../services/alert.service";
 import {AddConnectionDialogComponent} from "../add-connection-dialog/add-connection-dialog.component";
 import {Connection} from "../models/Connection";
 import {ManageEntitiesDialogComponent} from "../manage-entities-dialog/manage-entities-dialog.component";
+import {error} from "@angular/compiler-cli/src/transformers/util";
 
 @Component({
   selector: 'app-dashboard',
@@ -22,6 +23,9 @@ export class DashboardComponent implements OnInit{
   connections: Connection[] | undefined;
   selectedConnection: Connection | undefined;
   selectedOption: string | undefined;
+  selectedTable: string | undefined;
+  selectedConnectionId: string | undefined;
+  tables: String[] | undefined;
 
   ngOnInit() {
     this.getProjects();
@@ -81,6 +85,8 @@ export class DashboardComponent implements OnInit{
 
   onProjectSelectionChange(): void {
     if (this.selectedProject) {
+      this.selectedTable = '';
+      this.selectedOption = '';
       this.getConnectionsForAProject();
       const projectId = this.selectedProject.id;
       this.dashboardService.getFilesByProjectId(projectId).subscribe(
@@ -145,7 +151,17 @@ export class DashboardComponent implements OnInit{
   }
 
   onConnectionSelectionChange() {
-
+    if(this.selectedConnection != undefined){
+      this.selectedConnectionId = this.selectedConnection.id;
+      this.dashboardService.getTablesForASpecificConnection(this.selectedConnection.id).subscribe(
+        (response) => {
+          console.log(response);
+          this.tables = response.tables;
+        }, (error) => {
+          console.error('Error:', error);
+        }
+      );
+    }
   }
 
   onOptionSelectionChange() {
@@ -170,5 +186,9 @@ export class DashboardComponent implements OnInit{
         }
       }
     });
+  }
+
+  onTableSelectionChange() {
+
   }
 }

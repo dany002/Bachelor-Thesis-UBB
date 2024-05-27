@@ -1,43 +1,43 @@
-import { Component, Input, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import {Component, Input, OnInit, AfterViewInit, ChangeDetectorRef, OnDestroy} from '@angular/core';
 import { ChartData, ChartOptions } from 'chart.js';
 import { DashboardService } from '../services/dashboard.service';
 import 'chartjs-adapter-moment';
 import * as moment from 'moment';
 import {Log} from "../models/Log";
+import {interval, Subscription, switchMap} from "rxjs";
 
 @Component({
   selector: 'app-sql-injection-chart',
   templateUrl: './sql-injection-chart.component.html',
   styleUrls: ['./sql-injection-chart.component.css']
 })
-export class SqlInjectionChartComponent implements OnInit, AfterViewInit {
-  @Input() fileIdSQL: string | undefined;
+export class SqlInjectionChartComponent implements OnInit, OnDestroy {
 
-  public barChartData: ChartData<'bar'> = {
+  @Input() selectedTable: string | undefined;
+  @Input() connectionId: string | undefined;
+  public lineChartData: ChartData<'line'> = {
     labels: [],
     datasets: [
       {
         data: [],
-        label: 'No SQL Injection Detected',
-        backgroundColor: 'blue'
-      },
-      {
-        data: [],
-        label: 'SQL Injection Detected',
-        backgroundColor: 'red'
+        label: 'SQL Injection Detection',
+        borderColor: 'red',
+        backgroundColor: 'rgba(255, 0, 0, 0.3)',
+        borderWidth: 3,
+        fill: true
       }
     ]
   };
 
-  public barChartOptions: ChartOptions<'bar'> = {
+  public lineChartOptions: ChartOptions<'line'> = {
     responsive: true,
     scales: {
       x: {
-        type: 'timeseries',
+        type: 'time',
         time: {
           unit: 'hour',
           displayFormats: {
-            hour: 'MMM D, h:mm a (TIMESTAMP)'
+            hour: 'MMM D, h:mm a'
           }
         },
         title: {
@@ -47,132 +47,81 @@ export class SqlInjectionChartComponent implements OnInit, AfterViewInit {
       },
       y: {
         beginAtZero: true,
+        max: 1,
         title: {
           display: true,
-          text: 'Number of Logs'
+          text: 'SQL Injection Detection (0 or 1)'
         }
       }
     }
   };
 
-  constructor(private dashboardService: DashboardService, private cdr: ChangeDetectorRef) {}
+  private subscription: Subscription | undefined;
+  private offset: number = 0;
+
+  constructor(private dataFetchService: DashboardService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    if (this.fileIdSQL) {
-      this.fetchData();
-    } else {
-      this.loadHardcodedData();
+    if (this.selectedTable && this.connectionId) {
+      this.startFetchingData();
     }
   }
 
-  ngAfterViewInit(): void {
-    this.cdr.detectChanges();  // Ensure change detection after view init
-  }
-
-  loadHardcodedData(): void {
-    const sampleTimestamps = [
-      new Date('2024-05-18T10:00:00Z'),
-      new Date('2024-05-18T11:00:00Z'),
-      new Date('2024-05-18T12:00:00Z')
-    ];
-
-    const sampleSuspicions = [2, 5, 8];
-
-    //this.updateChartData(sampleTimestamps, sampleSuspicions);
-  }
-
-  fetchData(): void {
-    if (this.fileIdSQL) {
-      this.dashboardService.refreshChartSQLForASpecificFile(this.fileIdSQL).subscribe(
-        (response) => {
-          if (response.detail === "File processed successfully") {
-            this.dashboardService.getLogsForAFile(this.fileIdSQL).subscribe(
-                (logs: Log[]) => {
-                  // Extract timestamps from logs
-                  const timestamps = logs.map(log => new Date(log.timestamp));
-                  this.updateChartData(timestamps, logs);
-                },
-              (error) => {
-                console.error('Error fetching logs:', error);
-              }
-            );
-          } else {
-            console.error('File processing failed:', response);
-          }
-        },
-        (error) => {
-          console.error('Error fetching data:', error);
-        }
-      );
+  ngOnDestroy(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
     }
   }
 
-
-  // updateChartData(timestamps: Date[], logs: Log[]): void {
-  //   // Group logs by suspicion level
-  //   const groupedLogs = logs.reduce((acc, log) => {
-  //     const key = log.level === 0 ? 'level0' : 'level10';
-  //     if (!acc[key]) {
-  //       acc[key] = [];
-  //     }
-  //     acc[key].push(log);
-  //     return acc;
-  //   }, {} as { [key: string]: Log[] });
-  //
-  //   // Count logs for each level
-  //   const zeroSuspicions = groupedLogs['level0'] ? groupedLogs['level0'].length : 0;
-  //   const tenSuspicions = groupedLogs['level10'] ? groupedLogs['level10'].length : 0;
-  //   console.log(zeroSuspicions);
-  //   console.log(tenSuspicions)
-  //   // Update the dataset with the new values
-  //   this.barChartData.datasets[0].data = [zeroSuspicions];
-  //   this.barChartData.datasets[1].data = [tenSuspicions];
-  //
-  //   // Force change detection and chart redraw
-  //   this.cdr.detectChanges();
-  //   setTimeout(() => {
-  //     this.cdr.markForCheck();
-  //   }, 0);
-  // }
-
-  updateChartData(timestamps: Date[], logs: Log[]): void {
-    const zeroSuspicions = logs.filter(log => log.level === 0).length;
-    const tenSuspicions = logs.filter(log => log.level === 10).length;
-
-    this.barChartData.labels = timestamps.map(timestamp => moment(timestamp).format('MMM D, h:mm a'));
-    console.log(timestamps);
-    this.barChartData.datasets[0].data = [zeroSuspicions];
-    this.barChartData.datasets[1].data = [tenSuspicions];
-
-    // Force change detection and chart redraw
-    this.cdr.detectChanges();
-    setTimeout(() => {
-      this.cdr.markForCheck();
-    }, 0);
+  startFetchingData(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+    this.subscription = interval(10000)
+      .pipe(
+        switchMap(() => this.dataFetchService.fetchRecords(this.selectedTable!, this.offset, this.connectionId!))
+      )
+      .subscribe((response: any) => {
+        this.updateChartData(response.records);
+        this.offset += 100;
+      });
   }
 
+  updateChartData(records: any[]): void {
+    const timestamps = records.map(record => new Date(record.timestamp));
+    const predictions = records.map(record => record.prediction);
 
-
-  aggregateData(logs: any[]): { timestamps: Date[], suspicions: number[] } {
-    const aggregatedData: { [key: string]: { sum: number, count: number } } = {};
-
-    logs.forEach(log => {
-      const timestamp = moment(log.timestamp).startOf('hour').toISOString();
-      if (!aggregatedData[timestamp]) {
-        aggregatedData[timestamp] = { sum: 0, count: 0 };
-      }
-      aggregatedData[timestamp].sum += log.level;
-      aggregatedData[timestamp].count += 1;
+    // Create a map of timestamps to predictions
+    const dataMap: { [key: string]: number } = {};
+    timestamps.forEach((timestamp, index) => {
+      const time = moment(timestamp).startOf('minute').toISOString();
+      dataMap[time] = predictions[index];
     });
 
-    const timestamps: Date[] = [];
-    const suspicions: number[] = [];
+    // Generate data points for the entire day
+    const startOfDay = moment().startOf('day');
+    const endOfDay = moment().endOf('day');
+    const timeSeries: { x: Date, y: number }[] = [];
 
-    for (const timestamp in aggregatedData) {
-      timestamps.push(new Date(timestamp));
-      suspicions.push(aggregatedData[timestamp].sum / aggregatedData[timestamp].count);
+    for (let time = startOfDay; time <= endOfDay; time.add(1, 'minute')) {
+      const timeString = time.toISOString();
+      timeSeries.push({
+        x: new Date(timeString),
+        y: dataMap[timeString] !== undefined ? dataMap[timeString] : 0
+      });
     }
 
-    return { timestamps, suspicions };
+    // Ensure existing data arrays are defined and concatenate new data
+    this.lineChartData.labels = [
+      ...(this.lineChartData.labels || []),
+      ...timeSeries.map(point => point.x)
+    ];
+    this.lineChartData.datasets[0].data = [
+      ...(this.lineChartData.datasets[0].data || []),
+      ...timeSeries.map(point => point.y)
+    ];
+
+    this.cdr.detectChanges();
   }
+
 }

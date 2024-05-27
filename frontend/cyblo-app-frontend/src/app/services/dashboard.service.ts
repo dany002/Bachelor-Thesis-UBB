@@ -90,17 +90,26 @@ export class DashboardService {
     );
   }
 
-
-
-  refreshChartSQLForASpecificFile(id: string): Observable<any> {
-    return this.http.get(`${this.backendUrl}/files/checksql/${id}`, { withCredentials: true });
+  getTablesForASpecificConnection(connection_id: string): Observable<any> {
+    return this.http.get(`${this.backendUrl}/connections/${connection_id}/tables`, {withCredentials: true});
   }
 
 
+  // DETAILS
+  refreshChartSQLForASpecificFile(id: string): Observable<any> {
+    return this.http.get(`${this.backendUrl}/files/checksql/${id}`, { withCredentials: true });
+  }
 
   getLogsForAFile(id: string | undefined): Observable<any> {
     return this.http.get(`${this.backendUrl}/files/${id}`, { withCredentials: true });
   }
 
+  fetchRecords(table: string, offset: number, connection_id: string): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/get-records`, {
+      table,
+      offset,
+      connection_id: connection_id
+    }, {withCredentials: true});
+  }
 
 }
