@@ -1,0 +1,39 @@
+<h2 mat-dialog-title>Edit File</h2>
+<mat-dialog-content>
+  <form #fileForm="ngForm">
+    <div class="input-container">
+      <mat-form-field appearance="fill" class="mat-form-field-wrapper">
+        <mat-label>Path to Logs</mat-label>
+        <textarea matInput name="path-logs" [(ngModel)]="path" required></textarea>
+        <mat-hint align="end">Full path to Google Cloud Storage file</mat-hint>
+      </mat-form-field>
+    </div>
+    <div class="input-container">
+      <mat-form-field appearance="fill" class="mat-form-field-wrapper">
+        <mat-label>Key</mat-label>
+        <textarea matInput name="key" [(ngModel)]="service_account_key" required></textarea>
+        <mat-hint align="end">Insert the Credentials for service account, json file expected</mat-hint>
+      </mat-form-field>
+    </div>
+    <div class="input-container">
+      <mat-form-field appearance="fill" class="mat-form-field-wrapper">
+        <mat-label>Type of File</mat-label>
+        <mat-select name="type" [(ngModel)]="type" required>
+          <mat-option *ngFor="let option of fileTypes" [value]="option">{{ option }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="input-container">
+      <mat-form-field appearance="fill" class="mat-form-field-wrapper">
+        <mat-label>Project</mat-label>
+        <mat-select name="project" [(ngModel)]="selectedProjectId" required>
+          <mat-option *ngFor="let project of projects" [value]="project.id">{{ project.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-button color="primary" [disabled]="!fileForm.valid" (click)="onEdit()">Update</button>
+</mat-dialog-actions>

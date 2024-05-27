@@ -18,6 +18,15 @@
           <p><strong>Type:</strong> {{ entity.type }}</p>
           <p><strong>Project:</strong> {{entity.project.name}}</p>
         </div>
+        <div *ngIf="entityType === 'connections'">
+          <p><strong>Name:</strong> {{ entity.name }}</p>
+          <p><strong>Host:</strong> {{ entity.host }}</p>
+          <p><strong>Port:</strong> {{ entity.port }}</p>
+          <p><strong>Database:</strong> {{ entity.database }}</p>
+          <p><strong>Username:</strong> {{entity.username}}</p>
+          <p><strong>Password:</strong> {{entity.password}}</p>
+          <p><strong>Project:</strong> {{entity.project.name}}</p>
+        </div>
       </div>
       <span class="entity-actions">
         <button mat-icon-button (click)="updateEntity(entity)">

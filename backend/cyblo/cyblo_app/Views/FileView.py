@@ -1,5 +1,7 @@
 import os
 import re
+
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
@@ -30,6 +32,39 @@ def get_files_for_a_specific_user(request):
         return Response(serializer.data, status=HTTP_200_OK)
     else:
         return Response({"detail": "No files found for the user."}, status=HTTP_404_NOT_FOUND)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def edit_file(request):
+    try:
+        id = request.data['id']
+        file = File.objects.get(id=id)
+    except File.DoesNotExist:
+        return Response({'detail': 'File not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    file_serializer = FileSerializer(file, data=request.data, partial=True)
+
+    try:
+        file_serializer.is_valid(raise_exception=True)
+    except Exception as e:
+        return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    file = file_serializer.save()
+
+    return Response(file_serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_file(request, file_id):
+    try:
+        # Retrieve the project instance to be deleted
+        file = get_object_or_404(File, id=file_id)
+        file.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except Exception as e:
+        return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])

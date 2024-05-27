@@ -59,6 +59,8 @@ class LogSerializer(serializers.ModelSerializer):
 
 class ExternalDBConnectionSerializer(serializers.ModelSerializer):
     port = serializers.IntegerField()
+    project_id = serializers.UUIDField(write_only=True)
+    project = ProjectSerializer(read_only=True)
     class Meta:
         model = ExternalDBConnection
-        fields = ['id', 'name', 'host', 'port', 'username', 'password', 'database', 'project', 'user']
+        fields = ['id', 'name', 'host', 'port', 'username', 'password', 'database', 'project', 'project_id', 'user']

@@ -25,6 +25,8 @@ import { AddConnectionDialogComponent } from './add-connection-dialog/add-connec
 import { ManageEntitiesDialogComponent } from './manage-entities-dialog/manage-entities-dialog.component';
 import { EditProjectDialogComponent } from './edit-project-dialog/edit-project-dialog.component';
 import { DeleteEntityDialogComponent } from './delete-entity-dialog/delete-entity-dialog.component';
+import { EditFileDialogComponent } from './edit-file-dialog/edit-file-dialog.component';
+import { EditConnectionDialogComponent } from './edit-connection-dialog/edit-connection-dialog.component';
 
 
 @NgModule({
@@ -39,7 +41,9 @@ import { DeleteEntityDialogComponent } from './delete-entity-dialog/delete-entit
     AddConnectionDialogComponent,
     ManageEntitiesDialogComponent,
     EditProjectDialogComponent,
-    DeleteEntityDialogComponent
+    DeleteEntityDialogComponent,
+    EditFileDialogComponent,
+    EditConnectionDialogComponent
   ],
   imports: [
     BrowserModule,

@@ -8,6 +8,8 @@ import {AddProject} from "../models/AddProject";
 import {AddFile} from "../models/AddFile";
 import {AddConnection} from "../models/AddConnection";
 import {Project} from "../models/Project";
+import {File} from "../models/File";
+import {Connection} from "../models/Connection";
 
 @Injectable({
   providedIn: 'root'
@@ -17,6 +19,8 @@ export class DashboardService {
   private backendUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) { }
+
+  // PROJECTS
 
   getProjects(): Observable<any> {
     return this.http.get<any>(`${this.backendUrl}/projects`, { withCredentials: true });
@@ -37,6 +41,8 @@ export class DashboardService {
     );
   }
 
+  // FILES
+
   getFilesByProjectId(id: string): Observable<any> {
     return this.http.get(`${this.backendUrl}/projects/${id}`, { withCredentials: true });
   }
@@ -45,23 +51,56 @@ export class DashboardService {
     return this.http.get(`${this.backendUrl}/files`, { withCredentials: true });
   }
 
-  refreshChartSQLForASpecificFile(id: string): Observable<any> {
-    return this.http.get(`${this.backendUrl}/files/checksql/${id}`, { withCredentials: true });
-  }
-
   addFile(file:AddFile): Observable<any>{
     return this.http.post<any>(`${this.backendUrl}/files/add`, file, { withCredentials: true });
   }
 
-  getLogsForAFile(id: string | undefined): Observable<any> {
-    return this.http.get(`${this.backendUrl}/files/${id}`, { withCredentials: true });
+  editFile(file: File): Observable<any> {
+    return this.http.put<any>(`${this.backendUrl}/files/edit`, file, { withCredentials: true });
+  }
+
+  deleteFile(file_id: string): Observable<HttpResponse<any>> {
+    return this.http.delete<HttpResponse<any>>(
+      `${this.backendUrl}/files/delete/${file_id}`,
+      { withCredentials: true, observe: 'response' }
+    );
+  }
+
+  // CONNECTIONS
+  getConnectionsForAProject(project_id: string | undefined): Observable<any>{
+    return this.http.get<any>(`${this.backendUrl}/connections/projects/${project_id}`, { withCredentials: true });
+  }
+
+  getAllConnectionsForAUser(): Observable<any> {
+    return this.http.get(`${this.backendUrl}/connections`, { withCredentials: true });
   }
 
   addExternalConnection(connection: AddConnection): Observable<any> {
     return this.http.post<any>(`${this.backendUrl}/connections/add`, connection, { withCredentials: true });
   }
 
-  getConnectionsForAProject(project_id: string | undefined): Observable<any>{
-    return this.http.get<any>(`${this.backendUrl}/connections/projects/${project_id}`, { withCredentials: true });
+  editConnection(connection: Connection): Observable<any> {
+    return this.http.put<any>(`${this.backendUrl}/connections/edit`, connection, { withCredentials: true });
   }
+
+  deleteConnection(connection_id: string): Observable<HttpResponse<any>> {
+    return this.http.delete<HttpResponse<any>>(
+      `${this.backendUrl}/connections/delete/${connection_id}`,
+      { withCredentials: true, observe: 'response' }
+    );
+  }
+
+
+
+  refreshChartSQLForASpecificFile(id: string): Observable<any> {
+    return this.http.get(`${this.backendUrl}/files/checksql/${id}`, { withCredentials: true });
+  }
+
+
+
+  getLogsForAFile(id: string | undefined): Observable<any> {
+    return this.http.get(`${this.backendUrl}/files/${id}`, { withCredentials: true });
+  }
+
+
 }

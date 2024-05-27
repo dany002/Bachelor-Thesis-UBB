@@ -19,30 +19,35 @@ export class AddConnectionDialogComponent{
   username: string = '';
   password: string = '';
   database: string = '';
+  projects: Project[];
+  project: Project | undefined;
 
 
   constructor(
     private fb: FormBuilder,
-    @Inject(MAT_DIALOG_DATA) public data: { projectId: string },
+    @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<AddConnectionDialogComponent>,
     private dashboardService: DashboardService,
     private alertService: AlertService
-  ) {}
+  ) {
+    this.projects = data.projects;
+  }
 
   onAdd(): void {
+    if(this.project != undefined){
+      const connectionToBeAdded: AddConnection = { name: this.name, host: this.host, port: this.port, username: this.username, password: this.password, database: this.database, project_id: this.project.id };
 
-    const connectionToBeAdded: AddConnection = { name: this.name, host: this.host, port: this.port, username: this.username, password: this.password, database: this.database, project_id: this.data.projectId };
-
-    this.dashboardService.addExternalConnection(connectionToBeAdded).subscribe(
-      (response) => {
-        console.log('Connection added successfully:', response);
-        this.dialogRef.close(true);
-      },
-      (error) => {
-        console.error('Error adding connection:', error);
-        this.dialogRef.close(false);
-      }
-    );
+      this.dashboardService.addExternalConnection(connectionToBeAdded).subscribe(
+        (response) => {
+          console.log('Connection added successfully:', response);
+          this.dialogRef.close(true);
+        },
+        (error) => {
+          console.error('Error adding connection:', error);
+          this.dialogRef.close(false);
+        }
+      );
+    }
   }
 
   onCancel(): void {

@@ -6,6 +6,9 @@ import {AddFileDialogComponent} from "../add-file-dialog/add-file-dialog.compone
 import {EditProjectDialogComponent} from "../edit-project-dialog/edit-project-dialog.component";
 import {DeleteEntityDialogComponent} from "../delete-entity-dialog/delete-entity-dialog.component";
 import {Project} from "../models/Project";
+import {EditFileDialogComponent} from "../edit-file-dialog/edit-file-dialog.component";
+import {AddConnectionDialogComponent} from "../add-connection-dialog/add-connection-dialog.component";
+import {EditConnectionDialogComponent} from "../edit-connection-dialog/edit-connection-dialog.component";
 
 @Component({
   selector: 'app-manage-entities-dialog',
@@ -51,16 +54,15 @@ export class ManageEntitiesDialogComponent implements OnInit{
           }
         );
     } else if (this.entityType === 'connections') {
-      if (this.data.projectId) {
-        this.dashboardService.getConnectionsForAProject(this.data.projectId).subscribe(
+        this.dashboardService.getAllConnectionsForAUser().subscribe(
           (response) => {
-            this.entities = response.connections;
+            this.entities = response;
+            console.log(response);
           },
           (error) => {
             console.error('Error fetching connections:', error);
           }
         );
-      }
     }
   }
 
@@ -74,8 +76,8 @@ export class ManageEntitiesDialogComponent implements OnInit{
           this.loadEntities();
         }
       });
-    } else if (this.entityType === 'files') {
-
+    }
+    else if (this.entityType === 'files') {
       this.dashboardService.getProjects().subscribe(
         (response) => {
           const dialogRef = this.dialog.open(AddFileDialogComponent, {
@@ -92,11 +94,28 @@ export class ManageEntitiesDialogComponent implements OnInit{
         },
         (error) => {
           console.error('Error fetching projects:', error);
-
         }
       );
-
-
+    }
+    else if (this.entityType === 'connections') {
+      this.dashboardService.getProjects().subscribe(
+        (response) => {
+          const dialogRef = this.dialog.open(AddConnectionDialogComponent, {
+            width: '600px',
+            data:{
+              projects: response.projects
+            }
+          });
+          dialogRef.afterClosed().subscribe(result => {
+            if(result) {
+              this.loadEntities();
+            }
+          });
+        },
+        (error) => {
+          console.error('Error fetching projects:', error);
+        }
+      );
     }
 
   }
@@ -116,6 +135,59 @@ export class ManageEntitiesDialogComponent implements OnInit{
           this.loadEntities();
         }
       });
+    }
+    else if (this.entityType === 'files') {
+      this.dashboardService.getProjects().subscribe(
+        (response) => {
+          const dialogRef = this.dialog.open(EditFileDialogComponent, {
+            width: '600px',
+            data:{
+              projects: response.projects,
+              project: entity.project,
+              path: entity.path,
+              service_account_key: entity.service_account_key,
+              type: entity.type,
+              fileId: entity.id
+            }
+          });
+          dialogRef.afterClosed().subscribe(result => {
+            if(result) {
+              this.loadEntities();
+            }
+          });
+        },
+        (error) => {
+          console.error('Error fetching projects:', error);
+        }
+      );
+    }
+    else if (this.entityType === 'connections') {
+      this.dashboardService.getProjects().subscribe(
+        (response) => {
+          const dialogRef = this.dialog.open(EditConnectionDialogComponent, {
+            width: '600px',
+            data:{
+              projects: response.projects,
+              project: entity.project,
+              name: entity.name,
+              host: entity.host,
+              port: entity.port,
+              username: entity.username,
+              password: entity.password,
+              database: entity.database,
+              connectionId: entity.id
+            }
+          });
+          dialogRef.afterClosed().subscribe(result => {
+            if(result) {
+              this.loadEntities();
+            }
+          });
+        },
+        (error) => {
+          console.error('Error fetching projects:', error);
+        }
+      );
     }
   }
 

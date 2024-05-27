@@ -39,6 +39,36 @@ export class DeleteEntityDialogComponent {
           }
         );
       }
+      else if (this.entityType === 'files'){
+        this.dashboardService.deleteFile(this.data.entityId).subscribe(
+          (response: HttpResponse<any>) => {
+            if (response.status === 204) {
+              console.log('File deleted successfully:', this.data.entityId);
+              this.dialogRef.close(true);
+            } else {
+              console.log('Failed to delete file:', this.data.entityId);
+            }
+          },
+          (error) => {
+            console.error('Error deleting file:', error);
+          }
+        );
+      }
+      else if (this.entityType === 'connections'){
+        this.dashboardService.deleteConnection(this.data.entityId).subscribe(
+          (response: HttpResponse<any>) => {
+            if (response.status === 204) {
+              console.log('Connection deleted successfully:', this.data.entityId);
+              this.dialogRef.close(true);
+            } else {
+              console.log('Failed to delete connection:', this.data.entityId);
+            }
+          },
+          (error) => {
+            console.error('Error deleting connection:', error);
+          }
+        );
+      }
     } else {
       console.log('Invalid delete me');
     }

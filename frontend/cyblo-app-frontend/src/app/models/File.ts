@@ -4,7 +4,7 @@ export interface File{
   last_check_time: string;
   last_read_position: number;
   path: string;
-  project: string;
+  project_id: string;
   service_account_key: string;
   type: string;
 }

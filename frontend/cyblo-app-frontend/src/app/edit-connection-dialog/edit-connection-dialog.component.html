@@ -1,4 +1,4 @@
-<h2 mat-dialog-title>Add New Connection</h2>
+<h2 mat-dialog-title>Edit Connection</h2>
 <mat-dialog-content>
   <form #connectionForm="ngForm">
     <div class="input-container">
@@ -49,5 +49,5 @@
 </mat-dialog-content>
 <mat-dialog-actions>
   <button mat-button (click)="onCancel()">Cancel</button>
-  <button mat-button color="primary" [disabled]="!connectionForm.valid" (click)="onAdd()">Save</button>
+  <button mat-button color="primary" [disabled]="!connectionForm.valid" (click)="onEdit()">Update</button>
 </mat-dialog-actions>
