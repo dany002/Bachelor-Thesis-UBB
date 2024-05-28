@@ -104,8 +104,16 @@ export class DashboardService {
     return this.http.get(`${this.backendUrl}/files/${id}`, { withCredentials: true });
   }
 
-  fetchRecords(table: string, offset: number, connection_id: string): Observable<any> {
-    return this.http.post<any>(`${this.backendUrl}/get-records`, {
+  fetchRecordsForAISQL(table: string, offset: number, connection_id: string): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/get_records_with_ai_sql`, {
+      table,
+      offset,
+      connection_id: connection_id
+    }, {withCredentials: true});
+  }
+
+  fetchRecordsForRegexSQL(table: string, offset: number, connection_id: string): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/get_records_with_regex_sql`, {
       table,
       offset,
       connection_id: connection_id

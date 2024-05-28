@@ -26,6 +26,7 @@ export class DashboardComponent implements OnInit{
   selectedTable: string | undefined;
   selectedConnectionId: string | undefined;
   tables: String[] | undefined;
+  offset: number = 0;
 
   ngOnInit() {
     this.getProjects();
@@ -165,7 +166,11 @@ export class DashboardComponent implements OnInit{
   }
 
   onOptionSelectionChange() {
-
+    // if (this.selectedOption === 'AI' || this.selectedOption === 'Regex') {
+    //   this.selectedTable = '';
+    //   this.selectedConnectionId = '';
+    //   this.offset = 0;
+    // }
   }
 
   openManageDialog(entityType: string) {

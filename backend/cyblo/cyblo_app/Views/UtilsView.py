@@ -1,5 +1,6 @@
 import json
 import pickle
+import re
 
 import psycopg2
 from django.http import JsonResponse
@@ -190,7 +191,7 @@ max_len = 544  # Replace this with the max_len value used during training
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def get_records(request):
+def get_records_with_ai_sql(request):
     data = json.loads(request.body)
     table = data.get('table')
     offset = int(data.get('offset', 0))
@@ -235,3 +236,65 @@ def get_records(request):
         return JsonResponse({'records': records})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_records_with_regex_sql(request):
+    data = json.loads(request.body)
+    table = data.get('table')
+    offset = int(data.get('offset', 0))
+    connection_id = data.get('connection_id')
+
+    if not connection_id:
+        return JsonResponse({'error': 'Connection ID is required'}, status=400)
+
+    try:
+        connection_details = ExternalDBConnection.objects.get(id=connection_id)
+    except ExternalDBConnection.DoesNotExist:
+        return JsonResponse({'error': 'Invalid connection ID'}, status=400)
+
+    try:
+        # Establish a connection to the external database
+        conn = psycopg2.connect(
+            host=connection_details.host,
+            port=connection_details.port,
+            user=connection_details.username,
+            password=connection_details.password,
+            database=connection_details.database
+        )
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT query, timestamp FROM {table} ORDER BY timestamp LIMIT 100 OFFSET %s", [offset])
+        records = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        records = [{'query': record[0], 'timestamp': record[1]} for record in records]
+
+        for record in records:
+            record['prediction'] = int(detect_sql_injection(record['query']))
+
+        return JsonResponse({'records': records})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def detect_sql_injection(sql_query):
+    # Comments regex
+    comments_regex = re.compile(r'(--|\/\*|\*\/|["]{2,}\s*|\S;\s*\S|^\"[^"]*\"$|#|^1["\']|^1\s+[\"\'])')
+    if comments_regex.search(sql_query):
+        return True
+
+    # Tautology regex
+    tautology_regex = re.compile(r"\b(\w+)\s*=\s*\1\b|([\"']\w+[\"']\s+[\"']\w+[\"'])|(\w+)\s+LIKE\s+\3\b", re.IGNORECASE)
+    if tautology_regex.search(sql_query):
+        return True
+
+    # Keyword regex
+    keyword_regex = re.compile(
+        r'\b(sleep|version|postgres|postgresql|schema|table|database|information_schema|pg_catalog|sysusers|systables|utl_inaddr|dbms_pipe|pg_sleep|rdb\$[\w_]*|waitfor|delay)\b',
+        re.IGNORECASE)
+    if keyword_regex.search(sql_query):
+        return True
+
+    return False

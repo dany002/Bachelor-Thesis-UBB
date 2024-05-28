@@ -37,9 +37,10 @@
 
   <div class="content" *ngIf="projects && projects.length > 0; else noProjects">
     <app-sql-injection-chart
-      *ngIf="selectedTable && selectedConnectionId"
+      *ngIf="selectedTable && selectedConnectionId && selectedOption"
       [selectedTable]="selectedTable"
-      [connectionId]="selectedConnectionId">
+      [connectionId]="selectedConnectionId"
+      [selectedOption]="selectedOption">
     </app-sql-injection-chart>
   </div>
 

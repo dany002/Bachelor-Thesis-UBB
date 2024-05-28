@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
 
+from cyblo.cyblo_app.Views.UtilsView import detect_sql_injection
 from cyblo.cyblo_app.models import File, Log, Project
 from cyblo.cyblo_app.serializers import FileSerializer, LogSerializer
 
@@ -111,25 +112,6 @@ def check_file_sql(request, file_id):
 
 
 
-def detect_sql_injection(sql_query):
-    # Comments regex
-    comments_regex = re.compile(r'(--|\/\*|\*\/|["]{2,}\s*|\S;\s*\S|^\"[^"]*\"$|#|^1["\']|^1\s+[\"\'])')
-    if comments_regex.search(sql_query):
-        return True
-
-    # Tautology regex
-    tautology_regex = re.compile(r"\b(\w+)\s*=\s*\1\b|([\"']\w+[\"']\s+[\"']\w+[\"'])|(\w+)\s+LIKE\s+\3\b", re.IGNORECASE)
-    if tautology_regex.search(sql_query):
-        return True
-
-    # Keyword regex
-    keyword_regex = re.compile(
-        r'\b(sleep|version|postgres|postgresql|schema|table|database|information_schema|pg_catalog|sysusers|systables|utl_inaddr|dbms_pipe|pg_sleep|rdb\$[\w_]*|waitfor|delay)\b',
-        re.IGNORECASE)
-    if keyword_regex.search(sql_query):
-        return True
-
-    return False
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
