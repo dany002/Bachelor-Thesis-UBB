@@ -42,6 +42,12 @@
       [connectionId]="selectedConnectionId"
       [selectedOption]="selectedOption">
     </app-sql-injection-chart>
+    <app-sql-injection-chart-detailed-ai-regex
+      *ngIf="selectedTable && selectedConnectionId && selectedOption"
+      [selectedTable]="selectedTable"
+      [connectionId]="selectedConnectionId"
+      [selectedOption]="selectedOption">
+    </app-sql-injection-chart-detailed-ai-regex>
   </div>
 
   <ng-template #noProjects>

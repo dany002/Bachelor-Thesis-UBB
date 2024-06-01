@@ -27,6 +27,7 @@ import { EditProjectDialogComponent } from './edit-project-dialog/edit-project-d
 import { DeleteEntityDialogComponent } from './delete-entity-dialog/delete-entity-dialog.component';
 import { EditFileDialogComponent } from './edit-file-dialog/edit-file-dialog.component';
 import { EditConnectionDialogComponent } from './edit-connection-dialog/edit-connection-dialog.component';
+import { SqlInjectionChartDetailedAiRegexComponent } from './sql-injection-chart-detailed-ai-regex/sql-injection-chart-detailed-ai-regex.component';
 
 
 @NgModule({
@@ -43,7 +44,8 @@ import { EditConnectionDialogComponent } from './edit-connection-dialog/edit-con
     EditProjectDialogComponent,
     DeleteEntityDialogComponent,
     EditFileDialogComponent,
-    EditConnectionDialogComponent
+    EditConnectionDialogComponent,
+    SqlInjectionChartDetailedAiRegexComponent
   ],
   imports: [
     BrowserModule,

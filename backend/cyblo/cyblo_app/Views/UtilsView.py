@@ -1,6 +1,7 @@
 import json
 import pickle
 import re
+from datetime import datetime, timedelta
 
 import psycopg2
 from django.http import JsonResponse
@@ -194,11 +195,15 @@ max_len = 544  # Replace this with the max_len value used during training
 def get_records_with_ai_sql(request):
     data = json.loads(request.body)
     table = data.get('table')
-    offset = int(data.get('offset', 0))
     connection_id = data.get('connection_id')
+    current_timestamp = data.get('current_timestamp')
+    offset = data.get('offset', 0)
 
     if not connection_id:
         return JsonResponse({'error': 'Connection ID is required'}, status=400)
+
+    if not current_timestamp:
+        return JsonResponse({'error': 'Current timestamp is required'}, status=400)
 
     try:
         connection_details = ExternalDBConnection.objects.get(id=connection_id)
@@ -215,11 +220,28 @@ def get_records_with_ai_sql(request):
             database=connection_details.database
         )
         cursor = conn.cursor()
-        cursor.execute(f"SELECT query, timestamp FROM {table} ORDER BY timestamp LIMIT 100 OFFSET %s", [offset])
+
+        # Assuming current_timestamp is in the format 'HH:MM'
+        current_datetime = datetime.strptime(current_timestamp, '%H:%M')
+
+        # Calculate the start and end timestamps based on the offset
+        start_time = current_datetime + timedelta(seconds=offset * 100)
+        end_time = start_time + timedelta(seconds=100)
+
+        # Convert to strings for SQL query
+        start_time_str = start_time.strftime('%H:%M:%S')
+        end_time_str = end_time.strftime('%H:%M:%S')
+
+        cursor.execute(f"""
+            SELECT query, timestamp 
+            FROM {table} 
+            WHERE timestamp::time >= %s AND timestamp::time < %s
+            ORDER BY timestamp
+            """, [start_time_str, end_time_str])
+
         records = cursor.fetchall()
         cursor.close()
         conn.close()
-
         records = [{'query': record[0], 'timestamp': record[1]} for record in records]
 
         # Preprocess and predict
@@ -237,17 +259,20 @@ def get_records_with_ai_sql(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_records_with_regex_sql(request):
     data = json.loads(request.body)
     table = data.get('table')
-    offset = int(data.get('offset', 0))
     connection_id = data.get('connection_id')
+    current_timestamp = data.get('current_timestamp')
+    offset = data.get('offset', 0)
 
     if not connection_id:
         return JsonResponse({'error': 'Connection ID is required'}, status=400)
+
+    if not current_timestamp:
+        return JsonResponse({'error': 'Current timestamp is required'}, status=400)
 
     try:
         connection_details = ExternalDBConnection.objects.get(id=connection_id)
@@ -264,11 +289,28 @@ def get_records_with_regex_sql(request):
             database=connection_details.database
         )
         cursor = conn.cursor()
-        cursor.execute(f"SELECT query, timestamp FROM {table} ORDER BY timestamp LIMIT 100 OFFSET %s", [offset])
+
+        # Assuming current_timestamp is in the format 'HH:MM'
+        current_datetime = datetime.strptime(current_timestamp, '%H:%M')
+
+        # Calculate the start and end timestamps based on the offset
+        start_time = current_datetime + timedelta(seconds=offset * 100)
+        end_time = start_time + timedelta(seconds=100)
+
+        # Convert to strings for SQL query
+        start_time_str = start_time.strftime('%H:%M:%S')
+        end_time_str = end_time.strftime('%H:%M:%S')
+
+        cursor.execute(f"""
+            SELECT query, timestamp 
+            FROM {table} 
+            WHERE timestamp::time >= %s AND timestamp::time < %s
+            ORDER BY timestamp
+            """, [start_time_str, end_time_str])
+
         records = cursor.fetchall()
         cursor.close()
         conn.close()
-
         records = [{'query': record[0], 'timestamp': record[1]} for record in records]
 
         for record in records:

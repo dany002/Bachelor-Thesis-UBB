@@ -2,23 +2,21 @@ import {
   Component,
   Input,
   OnInit,
-  AfterViewInit,
-  ChangeDetectorRef,
   OnDestroy,
   ViewChild,
-  OnChanges, SimpleChanges
+  OnChanges, SimpleChanges, ChangeDetectorRef
 } from '@angular/core';
-import {Chart, ChartData, ChartOptions, registerables, ScatterDataPoint, TooltipItem} from 'chart.js';
+import { Chart, registerables } from 'chart.js';
+
+import {ChartData, ChartOptions, ChartType, ScatterDataPoint, TooltipItem} from 'chart.js/auto';
 import { DashboardService } from '../services/dashboard.service';
 import 'chartjs-adapter-moment';
 import { BaseChartDirective } from 'ng2-charts';
 import * as moment from 'moment';
-import {Log} from "../models/Log";
 import {interval, Subscription, switchMap, take} from "rxjs";
 import zoomPlugin from 'chartjs-plugin-zoom';
 
 Chart.register(...registerables, zoomPlugin);
-
 
 @Component({
   selector: 'app-sql-injection-chart',
@@ -27,45 +25,32 @@ Chart.register(...registerables, zoomPlugin);
 })
 export class SqlInjectionChartComponent implements OnInit, OnDestroy, OnChanges {
 
-
   @Input() selectedTable: string | undefined;
   @Input() connectionId: string | undefined;
   @Input() selectedOption: string | undefined;
 
   @ViewChild(BaseChartDirective) chart: BaseChartDirective | undefined;
 
-  // public lineChartData: ChartData<'line'> = {
-  //   labels: [],
-  //   datasets: [
-  //     {
-  //       data: [],
-  //       label: 'SQL Injection Detection',
-  //       borderColor: 'red',
-  //       backgroundColor: 'rgba(255, 0, 0, 0.3)',
-  //       borderWidth: 3,
-  //       fill: true
-  //     }
-  //   ]
-  // };
 
   public lineChartData: ChartData<'line'> = {
-    labels: [],
     datasets: [
       {
-        data: [], // For detections labeled as 1
-        label: 'SQL Injection Detection (1)',
+        data: [], // For counts of queries labeled as 1
+        label: 'SQL Injection Attacks',
         borderColor: 'red',
         backgroundColor: 'rgba(255, 0, 0, 0.3)',
         borderWidth: 3,
-        fill: true
+        pointRadius: 3,
+        fill: false
       },
       {
-        data: [], // For detections labeled as 0
-        label: 'SQL Injection Detection (0)',
+        data: [], // For counts of queries labeled as 0
+        label: 'Safe Queries',
         borderColor: 'green',
         backgroundColor: 'rgba(0, 255, 0, 0.3)',
         borderWidth: 3,
-        fill: true
+        pointRadius: 3,
+        fill: false
       }
     ]
   };
@@ -77,23 +62,24 @@ export class SqlInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
       x: {
         type: 'time',
         time: {
-          unit: 'hour',
+          unit: 'second',
           displayFormats: {
-            hour: 'MMM D, h:mm a'
+            second: 'HH:mm:ss'
           }
         },
         title: {
           display: true,
           text: 'Timestamp'
-        }
+        },
+        min: moment().valueOf(),
+        max: moment().add(10, 'minutes').valueOf()
       },
       y: {
-        // beginAtZero: true,
-        min: -1,
-        max: 1,
+        beginAtZero: true,
+        max: 200,
         title: {
           display: true,
-          text: 'SQL Injection Detection (0 or 1)'
+          text: 'Count of SQL Injection Detections'
         }
       }
     },
@@ -116,19 +102,18 @@ export class SqlInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
       tooltip: {
         callbacks: {
           label: (context: TooltipItem<'line'>) => {
-            const index = context.dataIndex;
-            const dataset = context.datasetIndex === 0 ? this.lineChartData.datasets[0] : this.lineChartData.datasets[1];
-            const dataPoint = (dataset.data as ScatterDataPoint[])[index];
-            const query = (dataPoint as any).query;
-            return `Prediction: ${dataPoint.y}, Query: ${query}`;
+            const dataPoint = context.raw as { x: number, y: number };
+            const formattedDate = moment(dataPoint.x).format('MMM D, h:mm a');
+            // return `Count: ${dataPoint.x}, ${dataPoint.y}`
+            return `Count: ${dataPoint.y}, ${formattedDate}`;
           }
         }
       }
     }
   };
 
-  private subscription: Subscription | undefined;
   private offset: number = 0;
+  private subscription: Subscription | undefined;
 
   constructor(private dataFetchService: DashboardService, private cdr: ChangeDetectorRef) {}
 
@@ -152,11 +137,8 @@ export class SqlInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
 
   renderChart(): void {
     // Clear existing data
-    this.lineChartData.labels = [];
     this.lineChartData.datasets[0].data = [];
     this.lineChartData.datasets[1].data = [];
-
-    // Reset offset
     this.offset = 0;
 
     if (this.chart) {
@@ -171,135 +153,120 @@ export class SqlInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
-    this.subscription = interval(10000)
+    const currentTimestamp = moment().format('HH:mm'); // Update current timestamp for each request
+    this.subscription = interval(10000) // Wait for 30 seconds between each request
       .pipe(
-        take(9),
         switchMap(() => {
           if (this.selectedOption === 'AI') {
-            return this.dataFetchService.fetchRecordsForAISQL(this.selectedTable!, this.offset, this.connectionId!);
+            return this.dataFetchService.fetchRecordsForAISQL(this.selectedTable!, currentTimestamp, this.connectionId!, this.offset);
           } else if (this.selectedOption === 'Regex') {
-            return this.dataFetchService.fetchRecordsForRegexSQL(this.selectedTable!, this.offset, this.connectionId!);
+            return this.dataFetchService.fetchRecordsForRegexSQL(this.selectedTable!, currentTimestamp, this.connectionId!, this.offset);
           } else {
             throw new Error('Invalid selected option');
           }
         })
       )
       .subscribe((response: any) => {
+        // console.log(response.records);
         this.updateChartData(response.records);
-        this.offset += 100;
+        this.offset += 1;
       });
   }
 
   updateChartData(records: any[]): void {
-    const timestamps = records.map(record => new Date(record.timestamp));
-    const predictions = records.map(record => record.prediction);
-    const queries = records.map(record => record.query);
+    const currentTime = moment(); // Current time on the frontend
 
-    // Create a map of timestamps to predictions and queries
-    const dataMap: { [key: string]: { y: number, query: string } } = {};
-    timestamps.forEach((timestamp, index) => {
-      const time = moment(timestamp).startOf('minute').toISOString();
-      dataMap[time] = { y: predictions[index], query: queries[index] };
-    });
+    const sqliCount = records.filter(record => record.prediction === 1).length;
+    const noSqliCount = records.filter(record => record.prediction === 0).length;
 
-    // Use the first log's timestamp as the start time
-    const startTime = timestamps.length > 0 ? moment(timestamps[0]).startOf('minute') : moment().startOf('minute');
-    const endTime = moment();
+    const pointDataSqli = { x: currentTime.valueOf(), y: sqliCount };
+    const pointDataNoSqli = { x: currentTime.valueOf(), y: noSqliCount };
 
-    const newTimeSeries1: { x: number, y: number, query: string }[] = []; // For detections labeled as 1
-    const newTimeSeries0: { x: number, y: number, query: string }[] = []; // For detections labeled as 0
-    const newTimeSeriesMinus1: { x: number, y: number, query: string }[] = []; // For detections labeled as -1
+    this.lineChartData.datasets[0].data = [...this.lineChartData.datasets[0].data, pointDataSqli];
+    this.lineChartData.datasets[1].data = [...this.lineChartData.datasets[1].data, pointDataNoSqli];
 
-    // Preserve existing data
-    const existingData1 = this.lineChartData.datasets[0].data as { x: number, y: number, query: string }[];
-    const existingData0 = this.lineChartData.datasets[1].data as { x: number, y: number, query: string }[];
-    const existingDataMinus1 = existingData0.filter(data => data.y === -1);
-    const existingData0Only = existingData0.filter(data => data.y === 0);
+    this.lineChartOptions.scales!['x']!.min = moment().valueOf();
+    this.lineChartOptions.scales!['x']!.max = moment().add(10, 'minutes').valueOf();
 
-    newTimeSeries1.push(...existingData1);
-    newTimeSeries0.push(...existingData0Only);
-    newTimeSeriesMinus1.push(...existingDataMinus1);
-
-    for (let time = startTime; time <= endTime; time.add(1, 'minute')) {
-      const timeString = time.toISOString();
-      if (dataMap[timeString] !== undefined) {
-        if (dataMap[timeString].y === 1) {
-          newTimeSeries1.push({
-            x: time.valueOf(),
-            y: 1,
-            query: dataMap[timeString].query
-          });
-        } else if (dataMap[timeString].y === 0) {
-          newTimeSeriesMinus1.push({
-            x: time.valueOf(),
-            y: -1,
-            query: dataMap[timeString].query
-          });
-        }
-      } else {
-        newTimeSeries0.push({
-          x: time.valueOf(),
-          y: 0,
-          query: ''
-        });
-      }
-    }
-
-    // Concatenate and sort data to ensure correct order by timestamp
-    const combinedNewTimeSeries0 = newTimeSeries0.concat(newTimeSeriesMinus1).sort((a, b) => a.x - b.x);
-
-    // Update chart data
-    this.lineChartData.datasets[0].data = newTimeSeries1;
-    this.lineChartData.datasets[1].data = combinedNewTimeSeries0;
-
-    this.cdr.detectChanges();
+    this.cdr.detectChanges();  // Force change detection
     if (this.chart) {
       this.chart.update();
     }
   }
 
 
+  // updateChartData(records: any[]): void {
+  //   const timestamps = records.map(record => new Date(record.timestamp));
+  //   const predictions = records.map(record => record.prediction);
+  //
+  //   const sqliCount = predictions.filter(prediction => prediction === 1).length;
+  //   const noSqliCount = predictions.filter(prediction => prediction === 0).length;
+  //
+  //   const x = timestamps[0].getTime() - 3 * 60 * 60 * 1000;
+  //
+  //   const pointDataSqli = { x, y: sqliCount };
+  //   const pointDataNoSqli = { x, y: noSqliCount };
+  //
+  //   this.lineChartData.datasets[0].data = [...this.lineChartData.datasets[0].data, pointDataSqli];
+  //   this.lineChartData.datasets[1].data = [...this.lineChartData.datasets[1].data, pointDataNoSqli];
+  //
+  //   this.lineChartData.datasets[0].label = 'SQL Injection Attacks';
+  //   this.lineChartData.datasets[1].label = 'Safe Queries';
+  //
+  //   this.lineChartOptions.scales!['x']!.min = moment().subtract(3, 'hours').valueOf();
+  //   this.lineChartOptions.scales!['x']!.max = moment().add(40, 'minutes').valueOf();
+  //
+  //   this.cdr.detectChanges();  // Force change detection
+  //   if (this.chart) {
+  //     this.chart.update();
+  //   }
+  // }
 
 
   // updateChartData(records: any[]): void {
   //   const timestamps = records.map(record => new Date(record.timestamp));
   //   const predictions = records.map(record => record.prediction);
-  //   const queries = records.map(record => record.query);
   //
-  //   // Create a map of timestamps to predictions and queries
-  //   const dataMap: { [key: string]: { y: number, query: string } } = {};
-  //   timestamps.forEach((timestamp, index) => {
-  //     const time = moment(timestamp).startOf('minute').toISOString();
-  //     dataMap[time] = {y: predictions[index], query: queries[index]};
-  //   });
+  //   // Count SQL Injection and Non-SQL Injection queries
+  //   const sqliCount = predictions.filter(prediction => prediction === 1).length;
+  //   const noSqliCount = predictions.filter(prediction => prediction === 0).length;
   //
-  //   // Use the first log's timestamp as the start time
-  //   const startTime = timestamps.length > 0 ? moment(timestamps[0]).startOf('minute') : moment().startOf('minute');
-  //   const endTime = moment();
+  //   // Calculate x coordinate with -3 hours adjustment
+  //   const x = timestamps[0].getTime() - 3 * 60 * 60 * 1000;
   //
-  //   const newTimeSeries: { x: number, y: number, query: string }[] = [];
+  //   // Create point data for SQL Injection and Non-SQL Injection queries
+  //   const pointDataSqli = { x, y: sqliCount };
+  //   const pointDataNoSqli = { x, y: noSqliCount };
   //
-  //   for (let time = startTime; time <= endTime; time.add(1, 'minute')) {
-  //     const timeString = time.toISOString();
-  //     newTimeSeries.push({
-  //       x: time.valueOf(),
-  //       y: dataMap[timeString] !== undefined ? dataMap[timeString].y : 0,
-  //       query: dataMap[timeString] !== undefined ? dataMap[timeString].query : ''
-  //     });
+  //   // Append new data to existing datasets or create new datasets if they don't exist
+  //   if (!this.lineChartData.datasets[0].data.length) {
+  //     this.lineChartData.datasets[0].data.push(pointDataSqli);
+  //   } else {
+  //     const lastDataPoint = this.lineChartData.datasets[0].data[this.lineChartData.datasets[0].data.length - 1] as ScatterDataPoint;
+  //     if (lastDataPoint && lastDataPoint.x !== undefined && lastDataPoint.x !== pointDataSqli.x) {
+  //       this.lineChartData.datasets[0].data.push(pointDataSqli);
+  //     }
   //   }
   //
-  //   // Append new data to the existing data
-  //   const existingData = this.lineChartData.datasets[0].data as { x: number, y: number, query: string }[];
-  //   const combinedData = [...existingData, ...newTimeSeries];
+  //   if (!this.lineChartData.datasets[1].data.length) {
+  //     this.lineChartData.datasets[1].data.push(pointDataNoSqli);
+  //   } else {
+  //     const lastDataPoint = this.lineChartData.datasets[1].data[this.lineChartData.datasets[1].data.length - 1] as ScatterDataPoint;
+  //     if (lastDataPoint && lastDataPoint.x !== undefined && lastDataPoint.x !== pointDataNoSqli.x) {
+  //       this.lineChartData.datasets[1].data.push(pointDataNoSqli);
+  //     }
+  //   }
   //
-  //   // Sort the combined data by timestamp to maintain chronological order
-  //   combinedData.sort((a, b) => a.x - b.x);
+  //   // Update dataset labels
+  //   this.lineChartData.datasets[0].label = 'SQL Injection Attacks';
+  //   this.lineChartData.datasets[1].label = 'Safe Queries';
+  //   console.log(this.lineChartData.datasets[0]);
+  //   console.log(this.lineChartData.datasets[1]);
   //
-  //   // Update chart data
-  //   this.lineChartData.labels = combinedData.map(point => point.x);
-  //   this.lineChartData.datasets[0].data = combinedData;
+  //   // Update chart options
+  //   this.lineChartOptions.scales!['x']!.min = moment().subtract(3, 'hours').valueOf();
+  //   this.lineChartOptions.scales!['x']!.max = moment().add(40, 'minutes').valueOf();
   //
-  //   this.cdr.detectChanges();
   //   if (this.chart) {
   //     this.chart.update();
   //   }
