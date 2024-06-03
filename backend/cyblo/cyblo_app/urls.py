@@ -8,7 +8,7 @@ from cyblo.cyblo_app.Views.ProjectView import get_user_projects, add_project, ad
 from cyblo.cyblo_app.Views.UserView import RegisterUser, LogoutUser, LoginUser, get_token_expiration
 from cyblo.cyblo_app.Views.UtilsView import create_external_db_connection, get_connections_for_a_project, \
     get_connections_for_a_specific_user, edit_connection, delete_connection, get_tables_for_a_connection, \
-    get_records_with_ai_sql, get_records_with_regex_sql
+    get_records_with_ai_sql, get_records_with_regex_sql, get_records_with_ai_xss, get_records_with_regex_xss
 
 urlpatterns = [
     path('register', RegisterUser.as_view(), name='register-user'),
@@ -35,4 +35,6 @@ urlpatterns = [
     path('connections/<uuid:connection_id>/tables', get_tables_for_a_connection, name='get_tables_for_a_connection'),
     path('get_records_with_ai_sql', get_records_with_ai_sql, name='get_records_with_ai_sql'),
     path('get_records_with_regex_sql', get_records_with_regex_sql, name='get_records_with_regex_sql'),
+    path('get_records_with_ai_xss', get_records_with_ai_xss, name='get_records_with_ai_xss'),
+    path('get_records_with_regex_xss', get_records_with_regex_xss, name='get_records_with_regex_xss'),
 ]

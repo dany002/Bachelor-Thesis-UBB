@@ -1,6 +1,7 @@
 import json
 import pickle
 import re
+import urllib.parse
 from datetime import datetime, timedelta
 
 import psycopg2
@@ -18,6 +19,15 @@ from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
 from cyblo.cyblo_app.models import Project, ExternalDBConnection
 from cyblo.cyblo_app.serializers import ExternalDBConnectionSerializer
 
+with open('models/tokenizer_sql.pickle', 'rb') as handle:
+    tokenizer = pickle.load(handle)
+model = load_model('models/best_model.h5')
+max_len = 544  # Replace this with the max_len value used during training
+
+with open('models/tokenizer_xss.pickle', 'rb') as handle:
+    tokenizer_xss = pickle.load(handle)
+model_xss = load_model('models/best_model_xss_hard_dataset.h5')
+max_len_xss = 606
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -184,10 +194,7 @@ def get_tables_for_a_connection(request, connection_id):
         return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-with open('models/tokenizer_sql.pickle', 'rb') as handle:
-    tokenizer = pickle.load(handle)
-model = load_model('models/best_model.h5')
-max_len = 544  # Replace this with the max_len value used during training
+
 
 
 @api_view(['POST'])
@@ -337,6 +344,167 @@ def detect_sql_injection(sql_query):
         r'\b(sleep|version|postgres|postgresql|schema|table|database|information_schema|pg_catalog|sysusers|systables|utl_inaddr|dbms_pipe|pg_sleep|rdb\$[\w_]*|waitfor|delay)\b',
         re.IGNORECASE)
     if keyword_regex.search(sql_query):
+        return True
+
+    return False
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_records_with_ai_xss(request):
+    data = json.loads(request.body)
+    table = data.get('table')
+    connection_id = data.get('connection_id')
+    current_timestamp = data.get('current_timestamp')
+    offset = data.get('offset', 0)
+
+    if not connection_id:
+        return JsonResponse({'error': 'Connection ID is required'}, status=400)
+
+    if not current_timestamp:
+        return JsonResponse({'error': 'Current timestamp is required'}, status=400)
+
+    try:
+        connection_details = ExternalDBConnection.objects.get(id=connection_id)
+    except ExternalDBConnection.DoesNotExist:
+        return JsonResponse({'error': 'Invalid connection ID'}, status=400)
+
+    try:
+        # Establish a connection to the external database
+        conn = psycopg2.connect(
+            host=connection_details.host,
+            port=connection_details.port,
+            user=connection_details.username,
+            password=connection_details.password,
+            database=connection_details.database
+        )
+        cursor = conn.cursor()
+
+        # Assuming current_timestamp is in the format 'HH:MM'
+        current_datetime = datetime.strptime(current_timestamp, '%H:%M')
+
+        # Calculate the start and end timestamps based on the offset
+        start_time = current_datetime + timedelta(seconds=offset * 100)
+        end_time = start_time + timedelta(seconds=100)
+
+        # Convert to strings for SQL query
+        start_time_str = start_time.strftime('%H:%M:%S')
+        end_time_str = end_time.strftime('%H:%M:%S')
+
+        cursor.execute(f"""
+            SELECT query, timestamp 
+            FROM {table} 
+            WHERE timestamp::time >= %s AND timestamp::time < %s
+            ORDER BY timestamp
+            """, [start_time_str, end_time_str])
+
+        records = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        records = [{'query': record[0], 'timestamp': record[1]} for record in records]
+
+        # Preprocess and predict
+        queries = [record['query'] for record in records]
+        X_seq = tokenizer_xss.texts_to_sequences(queries)
+        X_pad = pad_sequences(X_seq, maxlen=max_len_xss, padding='post')
+        predictions = model_xss.predict(X_pad)
+        binary_predictions = (predictions > 0.5).astype(int).squeeze()
+
+        # Add predictions to records
+        for i, record in enumerate(records):
+            record['prediction'] = int(binary_predictions[i])
+
+        return JsonResponse({'records': records})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_records_with_regex_xss(request):
+    data = json.loads(request.body)
+    table = data.get('table')
+    connection_id = data.get('connection_id')
+    current_timestamp = data.get('current_timestamp')
+    offset = data.get('offset', 0)
+
+    if not connection_id:
+        return JsonResponse({'error': 'Connection ID is required'}, status=400)
+
+    if not current_timestamp:
+        return JsonResponse({'error': 'Current timestamp is required'}, status=400)
+
+    try:
+        connection_details = ExternalDBConnection.objects.get(id=connection_id)
+    except ExternalDBConnection.DoesNotExist:
+        return JsonResponse({'error': 'Invalid connection ID'}, status=400)
+
+    try:
+        # Establish a connection to the external database
+        conn = psycopg2.connect(
+            host=connection_details.host,
+            port=connection_details.port,
+            user=connection_details.username,
+            password=connection_details.password,
+            database=connection_details.database
+        )
+        cursor = conn.cursor()
+
+        # Assuming current_timestamp is in the format 'HH:MM'
+        current_datetime = datetime.strptime(current_timestamp, '%H:%M')
+
+        # Calculate the start and end timestamps based on the offset
+        start_time = current_datetime + timedelta(seconds=offset * 100)
+        end_time = start_time + timedelta(seconds=100)
+
+        # Convert to strings for SQL query
+        start_time_str = start_time.strftime('%H:%M:%S')
+        end_time_str = end_time.strftime('%H:%M:%S')
+
+        cursor.execute(f"""
+            SELECT query, timestamp 
+            FROM {table} 
+            WHERE timestamp::time >= %s AND timestamp::time < %s
+            ORDER BY timestamp
+            """, [start_time_str, end_time_str])
+
+        records = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        records = [{'query': record[0], 'timestamp': record[1]} for record in records]
+
+        for record in records:
+            record['prediction'] = int(detect_xss_injection(record['query']))
+
+        return JsonResponse({'records': records})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def detect_xss_injection(xss_query):
+    xss_query = urllib.parse.unquote(xss_query)
+
+    # Non-ASCII regex
+    non_ascii_regex = re.compile(r'[^\x00-\x7F]')
+    if non_ascii_regex.search(xss_query):
+        return True
+
+    # Keyword regex
+    keyword_regex = re.compile(r'alert|<(/)?script(>)?|<marquee>|<br(/)?>', re.IGNORECASE)
+    if keyword_regex.search(xss_query):
+        return True
+
+    # Count quotes
+    if xss_query.count("'") % 2 != 0 or xss_query.count('"') % 2 != 0:
+        return True
+
+    # URL Pattern regex
+    url_pattern_regex = re.compile(r'(url|host|site)=(?!(http|https)).*\.[a-zA-Z]{2,}', re.IGNORECASE)
+    if url_pattern_regex.search(xss_query):
+        return True
+
+    src_exclusion_regex = re.compile(
+        r'src="[^"]*(?<!\.(mp4|jpg|png|gif|svg|web|ogg|mp3|wav|pdf))(?<!\.(docx|xlsx|pptx|jpeg))"', re.IGNORECASE)
+    if src_exclusion_regex.search(xss_query):
         return True
 
     return False

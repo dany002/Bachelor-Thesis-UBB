@@ -122,4 +122,23 @@ export class DashboardService {
     }, {withCredentials: true});
   }
 
+  fetchRecordsForAIXSS(table: string, currentTimestamp: string, connection_id: string, offset: number): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/get_records_with_ai_xss`, {
+      table: table,
+      current_timestamp: currentTimestamp,
+      connection_id: connection_id,
+      offset: offset
+    }, {withCredentials: true});
+  }
+
+  fetchRecordsForRegexXSS(table: string, currentTimestamp: string, connection_id: string, offset: number): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/get_records_with_regex_xss`, {
+      table: table,
+      current_timestamp: currentTimestamp,
+      connection_id: connection_id,
+      offset: offset
+    }, {withCredentials: true});
+  }
+
+
 }

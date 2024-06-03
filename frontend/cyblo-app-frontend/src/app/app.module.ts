@@ -28,6 +28,8 @@ import { DeleteEntityDialogComponent } from './delete-entity-dialog/delete-entit
 import { EditFileDialogComponent } from './edit-file-dialog/edit-file-dialog.component';
 import { EditConnectionDialogComponent } from './edit-connection-dialog/edit-connection-dialog.component';
 import { SqlInjectionChartDetailedAiRegexComponent } from './sql-injection-chart-detailed-ai-regex/sql-injection-chart-detailed-ai-regex.component';
+import { XssInjectionChartComponent } from './xss-injection-chart/xss-injection-chart.component';
+import { XssInjectionChartDetailedAiRegexComponent } from './xss-injection-chart-detailed-ai-regex/xss-injection-chart-detailed-ai-regex.component';
 
 
 @NgModule({
@@ -45,7 +47,9 @@ import { SqlInjectionChartDetailedAiRegexComponent } from './sql-injection-chart
     DeleteEntityDialogComponent,
     EditFileDialogComponent,
     EditConnectionDialogComponent,
-    SqlInjectionChartDetailedAiRegexComponent
+    SqlInjectionChartDetailedAiRegexComponent,
+    XssInjectionChartComponent,
+    XssInjectionChartDetailedAiRegexComponent
   ],
   imports: [
     BrowserModule,

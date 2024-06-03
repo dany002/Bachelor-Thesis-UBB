@@ -19,9 +19,15 @@
         </mat-select>
       </mat-form-field>
       <mat-form-field appearance="fill">
-        <mat-label>Select Table</mat-label>
+        <mat-label>Select Table SQL</mat-label>
         <mat-select [(ngModel)]="selectedTable" (selectionChange)="onTableSelectionChange()">
           <mat-option *ngFor="let table of tables" [value]="table">{{ table }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Select Table XSS</mat-label>
+        <mat-select [(ngModel)]="selectedTableXSS" (selectionChange)="onTableXSSSelectionChange()">
+          <mat-option *ngFor="let tableXSS of tables" [value]="tableXSS">{{ tableXSS }}</mat-option>
         </mat-select>
       </mat-form-field>
       <mat-form-field appearance="fill">
@@ -31,6 +37,7 @@
           <mat-option value="Regex">Regex</mat-option>
         </mat-select>
       </mat-form-field>
+      <button mat-raised-button color="primary" (click)="openAddAuditDialog()">Add Audit</button>
       <button mat-raised-button color="warn" class="logout-button" (click)="logout()">Logout</button>
     </div>
   </div>
@@ -48,6 +55,18 @@
       [connectionId]="selectedConnectionId"
       [selectedOption]="selectedOption">
     </app-sql-injection-chart-detailed-ai-regex>
+    <app-xss-injection-chart
+      *ngIf="selectedTableXSS && selectedConnectionId && selectedOption"
+      [selectedTableXSS]="selectedTableXSS"
+      [connectionId]="selectedConnectionId"
+      [selectedOption]="selectedOption">
+    </app-xss-injection-chart>
+    <app-xss-injection-chart-detailed-ai-regex
+      *ngIf="selectedTableXSS && selectedConnectionId && selectedOption"
+      [selectedTableXSS]="selectedTableXSS"
+      [connectionId]="selectedConnectionId"
+      [selectedOption]="selectedOption">
+    </app-xss-injection-chart-detailed-ai-regex>
   </div>
 
   <ng-template #noProjects>

@@ -26,7 +26,7 @@ export class DashboardComponent implements OnInit{
   selectedTable: string | undefined;
   selectedConnectionId: string | undefined;
   tables: String[] | undefined;
-  offset: number = 0;
+  selectedTableXSS: string | undefined;
 
   ngOnInit() {
     this.getProjects();
@@ -194,6 +194,14 @@ export class DashboardComponent implements OnInit{
   }
 
   onTableSelectionChange() {
+
+  }
+
+  onTableXSSSelectionChange() {
+
+  }
+
+  openAddAuditDialog() {
 
   }
 }
