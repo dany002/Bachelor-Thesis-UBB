@@ -30,6 +30,9 @@ import { EditConnectionDialogComponent } from './edit-connection-dialog/edit-con
 import { SqlInjectionChartDetailedAiRegexComponent } from './sql-injection-chart-detailed-ai-regex/sql-injection-chart-detailed-ai-regex.component';
 import { XssInjectionChartComponent } from './xss-injection-chart/xss-injection-chart.component';
 import { XssInjectionChartDetailedAiRegexComponent } from './xss-injection-chart-detailed-ai-regex/xss-injection-chart-detailed-ai-regex.component';
+import {MatRadioModule} from "@angular/material/radio";
+import {MatSlideToggleModule} from "@angular/material/slide-toggle";
+import {MatSliderModule} from "@angular/material/slider";
 
 
 @NgModule({
@@ -66,7 +69,10 @@ import { XssInjectionChartDetailedAiRegexComponent } from './xss-injection-chart
     MatCardModule,
     MatDialogModule,
     MatSelectModule,
-    NgChartsModule
+    NgChartsModule,
+    MatRadioModule,
+    MatSlideToggleModule,
+    MatSliderModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -12,24 +12,45 @@
           <mat-option *ngFor="let project of projects" [value]="project">{{ project.name }}</mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Select Connection</mat-label>
-        <mat-select [(ngModel)]="selectedConnection" (selectionChange)="onConnectionSelectionChange()">
-          <mat-option *ngFor="let connection of connections" [value]="connection">{{ connection.name }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Select Table SQL</mat-label>
-        <mat-select [(ngModel)]="selectedTable" (selectionChange)="onTableSelectionChange()">
-          <mat-option *ngFor="let table of tables" [value]="table">{{ table }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Select Table XSS</mat-label>
-        <mat-select [(ngModel)]="selectedTableXSS" (selectionChange)="onTableXSSSelectionChange()">
-          <mat-option *ngFor="let tableXSS of tables" [value]="tableXSS">{{ tableXSS }}</mat-option>
-        </mat-select>
-      </mat-form-field>
+
+      <mat-radio-group [(ngModel)]="selectedMode" (change)="onModeSelectionChange()" class="radio-group">
+        <mat-radio-button value="Real-Time" class="radio-button">Realtime</mat-radio-button>
+        <mat-radio-button value="Audit" class="radio-button">Audit</mat-radio-button>
+      </mat-radio-group>
+
+<!--      <div class="spacer"></div>-->
+
+
+      <ng-container *ngIf="selectedMode === 'Audit'">
+        <mat-form-field appearance="fill">
+          <mat-label>Select File</mat-label>
+          <mat-select [(ngModel)]="selectedFile" (selectionChange)="onFileSelectionChange()">
+            <mat-option *ngFor="let file of files" [value]="file">{{ file.path }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </ng-container>
+
+      <ng-container *ngIf="selectedMode === 'Real-Time'">
+        <mat-form-field appearance="fill">
+          <mat-label>Select Connection</mat-label>
+          <mat-select [(ngModel)]="selectedConnection" (selectionChange)="onConnectionSelectionChange()">
+            <mat-option *ngFor="let connection of connections" [value]="connection">{{ connection.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Select Table SQL</mat-label>
+          <mat-select [(ngModel)]="selectedTable" (selectionChange)="onTableSelectionChange()">
+            <mat-option *ngFor="let table of tables" [value]="table">{{ table }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Select Table XSS</mat-label>
+          <mat-select [(ngModel)]="selectedTableXSS" (selectionChange)="onTableXSSSelectionChange()">
+            <mat-option *ngFor="let tableXSS of tables" [value]="tableXSS">{{ tableXSS }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </ng-container>
+
       <mat-form-field appearance="fill">
         <mat-label>Select Option</mat-label>
         <mat-select [(ngModel)]="selectedOption" (selectionChange)="onOptionSelectionChange()">
@@ -37,35 +58,46 @@
           <mat-option value="Regex">Regex</mat-option>
         </mat-select>
       </mat-form-field>
-      <button mat-raised-button color="primary" (click)="openAddAuditDialog()">Add Audit</button>
       <button mat-raised-button color="warn" class="logout-button" (click)="logout()">Logout</button>
     </div>
   </div>
 
   <div class="content" *ngIf="projects && projects.length > 0; else noProjects">
     <app-sql-injection-chart
-      *ngIf="selectedTable && selectedConnectionId && selectedOption"
+      *ngIf="selectedTable && selectedConnectionId && selectedOption && selectedMode==='Real-Time' || selectedProject && selectedMode==='Audit' && selectedFile && selectedOption && selectedFile.type === 'SQL'"
       [selectedTable]="selectedTable"
       [connectionId]="selectedConnectionId"
-      [selectedOption]="selectedOption">
+      [selectedOption]="selectedOption"
+      [selectedFile]="selectedFile ? selectedFile.id : null"
+      [selectedMode]="selectedMode"
+    >
     </app-sql-injection-chart>
     <app-sql-injection-chart-detailed-ai-regex
-      *ngIf="selectedTable && selectedConnectionId && selectedOption"
+      *ngIf="selectedTable && selectedConnectionId && selectedOption  && selectedMode==='Real-Time' || selectedProject && selectedMode==='Audit' && selectedFile && selectedOption && selectedFile.type === 'SQL'"
       [selectedTable]="selectedTable"
       [connectionId]="selectedConnectionId"
-      [selectedOption]="selectedOption">
+      [selectedOption]="selectedOption"
+      [selectedFile]="selectedFile ? selectedFile.id : null"
+      [selectedMode]="selectedMode"
+    >
     </app-sql-injection-chart-detailed-ai-regex>
     <app-xss-injection-chart
-      *ngIf="selectedTableXSS && selectedConnectionId && selectedOption"
+      *ngIf="selectedTableXSS && selectedConnectionId && selectedOption && selectedMode==='Real-Time' || selectedProject && selectedMode==='Audit' && selectedFile && selectedOption && selectedFile.type === 'XSS'"
       [selectedTableXSS]="selectedTableXSS"
       [connectionId]="selectedConnectionId"
-      [selectedOption]="selectedOption">
+      [selectedOption]="selectedOption"
+      [selectedFile]="selectedFile ? selectedFile.id : null"
+      [selectedMode]="selectedMode"
+    >
     </app-xss-injection-chart>
     <app-xss-injection-chart-detailed-ai-regex
-      *ngIf="selectedTableXSS && selectedConnectionId && selectedOption"
+      *ngIf="selectedTableXSS && selectedConnectionId && selectedOption && selectedMode==='Real-Time' || selectedProject && selectedMode==='Audit' && selectedFile && selectedOption && selectedFile.type === 'XSS'"
       [selectedTableXSS]="selectedTableXSS"
       [connectionId]="selectedConnectionId"
-      [selectedOption]="selectedOption">
+      [selectedOption]="selectedOption"
+      [selectedFile]="selectedFile ? selectedFile.id : null"
+      [selectedMode]="selectedMode"
+    >
     </app-xss-injection-chart-detailed-ai-regex>
   </div>
 

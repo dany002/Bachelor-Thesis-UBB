@@ -140,5 +140,31 @@ export class DashboardService {
     }, {withCredentials: true});
   }
 
+  checkFileSQLRegex(file_id: string, currentTimestamp: string, page: number): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/check_file_sql_regex/${file_id}`, {
+      page: page,
+      timestamp: currentTimestamp
+    }, {withCredentials: true});
+  }
 
+  checkFileSQLAI(file_id: string, currentTimestamp: string, page: number): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/check_file_sql_ai/${file_id}`, {
+      page: page,
+      timestamp: currentTimestamp
+    }, {withCredentials: true});
+  }
+
+  checkFileXSSRegex(file_id: string, currentTimestamp: string, page: number): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/check_file_xss_regex/${file_id}`, {
+      page: page,
+      timestamp: currentTimestamp
+    }, {withCredentials: true});
+  }
+
+  checkFileXSSAI(file_id: string, currentTimestamp: string, page: number): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/check_file_xss_ai/${file_id}`, {
+      page: page,
+      timestamp: currentTimestamp
+    }, {withCredentials: true});
+  }
 }

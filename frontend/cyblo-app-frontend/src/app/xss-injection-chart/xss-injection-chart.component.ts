@@ -29,6 +29,8 @@ export class XssInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
   @Input() selectedTableXSS: string | undefined;
   @Input() connectionId: string | undefined;
   @Input() selectedOption: string | undefined;
+  @Input() selectedFile: string | null | undefined
+  @Input() selectedMode: string | undefined;
 
   @ViewChild(BaseChartDirective) chart: BaseChartDirective | undefined;
 
@@ -118,8 +120,10 @@ export class XssInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
   constructor(private dataFetchService: DashboardService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    if (this.selectedTableXSS && this.connectionId) {
+    if (this.selectedTableXSS && this.connectionId && this.selectedMode === 'Real-Time') {
       this.startFetchingData();
+    } else {
+      this.startFetchingDataFromFile();
     }
   }
 
@@ -146,10 +150,37 @@ export class XssInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     // Start fetching new data
-    this.startFetchingData();
+    if(this.selectedMode === 'Real-Time')
+      this.startFetchingData();
+    else{
+      this.startFetchingDataFromFile()
+    }
   }
 
   startFetchingData(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+    this.subscription = interval(10000) // Wait for 30 seconds between each request
+      .pipe(
+        switchMap(() => {
+          const currentTimestamp = moment().format('HH:mm'); // Update current timestamp for each request
+          if (this.selectedOption === 'AI') {
+            return this.dataFetchService.fetchRecordsForAIXSS(this.selectedTableXSS!, currentTimestamp, this.connectionId!, this.offset);
+          } else if (this.selectedOption === 'Regex') {
+            return this.dataFetchService.fetchRecordsForRegexXSS(this.selectedTableXSS!, currentTimestamp, this.connectionId!, this.offset);
+          } else {
+            throw new Error('Invalid selected option');
+          }
+        })
+      )
+      .subscribe((response: any) => {
+        this.updateChartData(response.records);
+        this.offset += 1;
+      });
+  }
+
+  startFetchingDataFromFile(): void {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
@@ -157,10 +188,10 @@ export class XssInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
     this.subscription = interval(10000) // Wait for 30 seconds between each request
       .pipe(
         switchMap(() => {
-          if (this.selectedOption === 'AI') {
-            return this.dataFetchService.fetchRecordsForAIXSS(this.selectedTableXSS!, currentTimestamp, this.connectionId!, this.offset);
-          } else if (this.selectedOption === 'Regex') {
-            return this.dataFetchService.fetchRecordsForRegexXSS(this.selectedTableXSS!, currentTimestamp, this.connectionId!, this.offset);
+          if (this.selectedOption === 'AI' && this.selectedFile) {
+            return this.dataFetchService.checkFileXSSAI(this.selectedFile, currentTimestamp, this.offset);
+          } else if (this.selectedOption === 'Regex' && this.selectedFile) {
+            return this.dataFetchService.checkFileXSSRegex(this.selectedFile, currentTimestamp, this.offset);
           } else {
             throw new Error('Invalid selected option');
           }
@@ -178,11 +209,11 @@ export class XssInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
     const sqliCount = records.filter(record => record.prediction === 1).length;
     const noSqliCount = records.filter(record => record.prediction === 0).length;
 
-    const pointDataSqli = { x: currentTime.valueOf(), y: sqliCount };
-    const pointDataNoSqli = { x: currentTime.valueOf(), y: noSqliCount };
+    const pointDataXSS = { x: currentTime.valueOf(), y: sqliCount };
+    const pointDataNoXSS = { x: currentTime.valueOf(), y: noSqliCount };
 
-    this.lineChartData.datasets[0].data = [...this.lineChartData.datasets[0].data, pointDataSqli];
-    this.lineChartData.datasets[1].data = [...this.lineChartData.datasets[1].data, pointDataNoSqli];
+    this.lineChartData.datasets[0].data = [...this.lineChartData.datasets[0].data, pointDataXSS];
+    this.lineChartData.datasets[1].data = [...this.lineChartData.datasets[1].data, pointDataNoXSS];
 
     this.lineChartOptions.scales!['x']!.min = moment().valueOf();
     this.lineChartOptions.scales!['x']!.max = moment().add(10, 'minutes').valueOf();

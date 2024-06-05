@@ -28,6 +28,8 @@ export class XssInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
   @Input() selectedTableXSS: string | undefined;
   @Input() connectionId: string | undefined;
   @Input() selectedOption: string | undefined;
+  @Input() selectedFile: string | null | undefined
+  @Input() selectedMode: string | undefined;
 
   @ViewChild(BaseChartDirective) chart: BaseChartDirective | undefined;
 
@@ -115,8 +117,10 @@ export class XssInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
   constructor(private dataFetchService: DashboardService) {}
 
   ngOnInit(): void {
-    if (this.selectedTableXSS && this.connectionId) {
+    if (this.selectedTableXSS && this.connectionId && this.selectedMode === 'Real-Time') {
       this.startFetchingData();
+    } else {
+      this.startFetchingDataFromFile();
     }
   }
 
@@ -143,7 +147,11 @@ export class XssInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
     }
 
     // Start fetching new data
-    this.startFetchingData();
+    if(this.selectedMode === 'Real-Time')
+      this.startFetchingData();
+    else{
+      this.startFetchingDataFromFile()
+    }
   }
 
   startFetchingData(): void {
@@ -167,6 +175,32 @@ export class XssInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
       });
   }
 
+  startFetchingDataFromFile(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+    // const currentTimestamp = moment().format('HH:mm');
+    this.subscription = interval(10000)
+      .pipe(
+        switchMap(() => {
+          const currentTimestamp = moment().format('HH:mm:ss'); // Update current timestamp for each request
+          if(this.selectedFile)
+          return forkJoin([
+            this.dataFetchService.checkFileXSSAI(this.selectedFile, currentTimestamp, this.offset),
+            this.dataFetchService.checkFileXSSAI(this.selectedFile, currentTimestamp, this.offset)
+          ]);
+          else
+            throw new Error('Invalid selected option');
+        })
+      )
+      .subscribe(([aiResponse, regexResponse]: [any, any]) => {
+        this.updateChartData(aiResponse.records, regexResponse.records);
+        this.offset += 1;
+      });
+  }
+
+
+
   updateChartData(aiRecords: any[], regexRecords: any[]): void {
     const currentTimestamp = moment().valueOf(); // Current time on the frontend
 
@@ -178,12 +212,12 @@ export class XssInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
     const sqliCountRegex = regexPredictions.filter(prediction => prediction === 1).length;
 
     // Create point data for SQL Injection detections
-    const pointDataSqliAI = { x: currentTimestamp, y: sqliCountAI };
-    const pointDataSqliRegex = { x: currentTimestamp, y: sqliCountRegex };
+    const pointDataXSSAI = { x: currentTimestamp, y: sqliCountAI };
+    const pointDataXSSRegex = { x: currentTimestamp, y: sqliCountRegex };
 
     // Append new data to existing datasets
-    this.lineChartData.datasets[0].data.push(pointDataSqliAI);
-    this.lineChartData.datasets[1].data.push(pointDataSqliRegex);
+    this.lineChartData.datasets[0].data.push(pointDataXSSAI);
+    this.lineChartData.datasets[1].data.push(pointDataXSSRegex);
 
     // Update chart options
     this.lineChartOptions.scales!['x']!.min = moment().valueOf();

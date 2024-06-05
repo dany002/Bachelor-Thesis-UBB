@@ -122,3 +122,4 @@ def get_logs(request, file_id):
         return Response(serializer.data, status=status.HTTP_200_OK)
     except Log.DoesNotExist:
         return Response({'detail': 'Logs not found'}, status=status.HTTP_404_NOT_FOUND)
+

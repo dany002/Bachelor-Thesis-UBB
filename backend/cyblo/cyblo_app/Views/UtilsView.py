@@ -1,5 +1,7 @@
 import json
+import os
 import pickle
+import random
 import re
 import urllib.parse
 from datetime import datetime, timedelta
@@ -16,7 +18,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
 
-from cyblo.cyblo_app.models import Project, ExternalDBConnection
+from cyblo.cyblo_app.models import Project, ExternalDBConnection, File
 from cyblo.cyblo_app.serializers import ExternalDBConnectionSerializer
 
 with open('models/tokenizer_sql.pickle', 'rb') as handle:
@@ -328,6 +330,90 @@ def get_records_with_regex_sql(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def check_file_sql_regex(request, file_id):
+    data = json.loads(request.body)
+    page_number = data.get('page', 1)
+    timestamp = data.get('timestamp', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    if not file_id:
+        return JsonResponse({'error': 'File ID is required'}, status=400)
+
+    try:
+        file = File.objects.get(id=file_id)
+    except File.DoesNotExist:
+        return JsonResponse({'error': 'Invalid file ID'}, status=400)
+
+    try:
+        file_path = os.path.join(os.getenv('SECURE_PATH_FOR_FILES'), str(file_id))
+        page_size = random.randint(100, 200)
+        offset = (page_number - 1) * page_size
+
+        records = []
+        with open(file_path, 'r') as file:
+            # Skip lines until offset
+            for _ in range(offset):
+                file.readline()
+
+            # Read lines for the current page
+            for _ in range(page_size):
+                line = file.readline().strip()  # Strip to remove leading/trailing whitespace
+                if not line:
+                    break
+                is_sql_injection = int(detect_sql_injection(line))
+                records.append({'query': line,  'timestamp': timestamp, 'prediction': is_sql_injection})
+        return JsonResponse({'records': records})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def check_file_sql_ai(request, file_id):
+    data = json.loads(request.body)
+    page_number = data.get('page', 1)
+    timestamp = data.get('timestamp', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    if not file_id:
+        return JsonResponse({'error': 'File ID is required'}, status=400)
+
+    try:
+        file = File.objects.get(id=file_id)
+    except File.DoesNotExist:
+        return JsonResponse({'error': 'Invalid file ID'}, status=400)
+
+    try:
+        file_path = os.path.join(os.getenv('SECURE_PATH_FOR_FILES'), str(file_id))
+        page_size = random.randint(100, 200)
+        offset = (page_number - 1) * page_size
+
+        records = []
+        with open(file_path, 'r') as file:
+            # Skip lines until offset
+            for _ in range(offset):
+                file.readline()
+
+            # Read lines for the current page
+            for _ in range(page_size):
+                line = file.readline().strip()  # Strip to remove leading/trailing whitespace
+                if not line:
+                    break
+                records.append({'query': line,  'timestamp': timestamp})
+
+            queries = [record['query'] for record in records]
+            X_seq = tokenizer.texts_to_sequences(queries)
+            X_pad = pad_sequences(X_seq, maxlen=max_len, padding='post')
+            predictions = model.predict(X_pad)
+            binary_predictions = (predictions > 0.5).astype(int).squeeze()
+
+            # Add predictions to records
+            for i, record in enumerate(records):
+                record['prediction'] = int(binary_predictions[i])
+
+        return JsonResponse({'records': records})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+
 def detect_sql_injection(sql_query):
     # Comments regex
     comments_regex = re.compile(r'(--|\/\*|\*\/|["]{2,}\s*|\S;\s*\S|^\"[^"]*\"$|#|^1["\']|^1\s+[\"\'])')
@@ -480,6 +566,88 @@ def get_records_with_regex_xss(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def check_file_xss_regex(request, file_id):
+    data = json.loads(request.body)
+    page_number = data.get('page', 1)
+    timestamp = data.get('timestamp', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    if not file_id:
+        return JsonResponse({'error': 'File ID is required'}, status=400)
+
+    try:
+        file = File.objects.get(id=file_id)
+    except File.DoesNotExist:
+        return JsonResponse({'error': 'Invalid file ID'}, status=400)
+
+    try:
+        file_path = os.path.join(os.getenv('SECURE_PATH_FOR_FILES'), str(file_id))
+        page_size = random.randint(100, 200)
+        offset = (page_number - 1) * page_size
+
+        records = []
+        with open(file_path, 'r') as file:
+            # Skip lines until offset
+            for _ in range(offset):
+                file.readline()
+
+            # Read lines for the current page
+            for _ in range(page_size):
+                line = file.readline().strip()  # Strip to remove leading/trailing whitespace
+                if not line:
+                    break
+                is_xss = int(detect_xss_injection(line))
+                records.append({'query': line,  'timestamp': timestamp, 'prediction': is_xss})
+        return JsonResponse({'records': records})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def check_file_xss_ai(request, file_id):
+    data = json.loads(request.body)
+    page_number = data.get('page', 1)
+    timestamp = data.get('timestamp', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    if not file_id:
+        return JsonResponse({'error': 'File ID is required'}, status=400)
+
+    try:
+        file = File.objects.get(id=file_id)
+    except File.DoesNotExist:
+        return JsonResponse({'error': 'Invalid file ID'}, status=400)
+
+    try:
+        file_path = os.path.join(os.getenv('SECURE_PATH_FOR_FILES'), str(file_id))
+        page_size = random.randint(100, 200)
+        offset = (page_number - 1) * page_size
+
+        records = []
+        with open(file_path, 'r') as file:
+            # Skip lines until offset
+            for _ in range(offset):
+                file.readline()
+
+            # Read lines for the current page
+            for _ in range(page_size):
+                line = file.readline().strip()  # Strip to remove leading/trailing whitespace
+                if not line:
+                    break
+                records.append({'query': line,  'timestamp': timestamp})
+
+            queries = [record['query'] for record in records]
+            X_seq = tokenizer_xss.texts_to_sequences(queries)
+            X_pad = pad_sequences(X_seq, maxlen=max_len_xss, padding='post')
+            predictions = model_xss.predict(X_pad)
+            binary_predictions = (predictions > 0.5).astype(int).squeeze()
+
+            # Add predictions to records
+            for i, record in enumerate(records):
+                record['prediction'] = int(binary_predictions[i])
+
+        return JsonResponse({'records': records})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 def detect_xss_injection(xss_query):
     xss_query = urllib.parse.unquote(xss_query)
 
@@ -508,3 +676,5 @@ def detect_xss_injection(xss_query):
         return True
 
     return False
+
+

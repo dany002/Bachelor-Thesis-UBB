@@ -28,6 +28,8 @@ export class SqlInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
   @Input() selectedTable: string | undefined;
   @Input() connectionId: string | undefined;
   @Input() selectedOption: string | undefined;
+  @Input() selectedFile: string | null | undefined
+  @Input() selectedMode: string | undefined;
 
   @ViewChild(BaseChartDirective) chart: BaseChartDirective | undefined;
 
@@ -115,8 +117,10 @@ export class SqlInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
   constructor(private dataFetchService: DashboardService) {}
 
   ngOnInit(): void {
-    if (this.selectedTable && this.connectionId) {
+    if (this.selectedTable && this.connectionId && this.selectedMode === 'Real-Time') {
       this.startFetchingData();
+    } else {
+      this.startFetchingDataFromFile();
     }
   }
 
@@ -143,7 +147,35 @@ export class SqlInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
     }
 
     // Start fetching new data
-    this.startFetchingData();
+    if(this.selectedMode === 'Real-Time')
+      this.startFetchingData();
+    else{
+      this.startFetchingDataFromFile()
+    }
+  }
+
+  startFetchingDataFromFile(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+    this.subscription = interval(10000)
+      .pipe(
+        switchMap(() => {
+          const currentTimestamp = moment().format('HH:mm:ss');
+          // const currentTimestamp = moment().format('HH:mm:ss'); // Update current timestamp for each request
+          if(this.selectedFile)
+            return forkJoin([
+            this.dataFetchService.checkFileSQLAI(this.selectedFile, currentTimestamp, this.offset),
+            this.dataFetchService.checkFileSQLRegex(this.selectedFile, currentTimestamp, this.offset)
+          ]);
+          else
+            throw new Error('Invalid selected option');
+        })
+      )
+      .subscribe(([aiResponse, regexResponse]: [any, any]) => {
+        this.updateChartData(aiResponse.records, regexResponse.records);
+        this.offset += 1;
+      });
   }
 
   startFetchingData(): void {

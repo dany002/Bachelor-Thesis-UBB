@@ -2,8 +2,6 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  /*margin: 0 auto;*/
-  /*padding: 0 100px*/
 }
 
 .header {
@@ -19,11 +17,11 @@
 }
 
 .header-right {
-  margin-left: 20px; /* Adjust as needed */
+  margin-left: 20px;
 }
 
 .project-list {
-  margin-right: 20px; /* Adjust as needed */
+  margin-right: 20px;
 }
 
 .project-item {
@@ -35,7 +33,7 @@
 }
 
 .logout-button {
-  margin-left: 40px; /* Adjust the space between the logout button and the dropdown */
+  margin-left: 40px;
 }
 
 .manage-buttons {
@@ -44,10 +42,26 @@
   top: 100px;
   display: flex;
   flex-direction: column;
-  gap: 10px; /* Space between buttons */
+  gap: 10px;
   padding: 100px 100px;
 }
 
 .manage-buttons button {
-  margin-bottom: 10px; /* Additional space between buttons */
+  margin-bottom: 10px;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: row;
+  /*margin-top: 10px;*/
+  margin-bottom: 10px;
+  margin-right: 30px;
+}
+
+.radio-button {
+  margin-bottom: 5px;
+}
+
+.spacer {
+  flex: 300;
 }

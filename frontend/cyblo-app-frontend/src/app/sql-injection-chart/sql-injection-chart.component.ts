@@ -28,6 +28,8 @@ export class SqlInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
   @Input() selectedTable: string | undefined;
   @Input() connectionId: string | undefined;
   @Input() selectedOption: string | undefined;
+  @Input() selectedFile: string | null | undefined
+  @Input() selectedMode: string | undefined;
 
   @ViewChild(BaseChartDirective) chart: BaseChartDirective | undefined;
 
@@ -118,8 +120,10 @@ export class SqlInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
   constructor(private dataFetchService: DashboardService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    if (this.selectedTable && this.connectionId) {
+    if (this.selectedTable && this.connectionId && this.selectedMode === 'Real-Time') {
       this.startFetchingData();
+    } else{
+      this.startFetchingDataFromFile();
     }
   }
 
@@ -146,7 +150,11 @@ export class SqlInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     // Start fetching new data
-    this.startFetchingData();
+    if(this.selectedMode === 'Real-Time')
+      this.startFetchingData();
+    else{
+      this.startFetchingDataFromFile()
+    }
   }
 
   startFetchingData(): void {
@@ -168,6 +176,29 @@ export class SqlInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
       )
       .subscribe((response: any) => {
         // console.log(response.records);
+        this.updateChartData(response.records);
+        this.offset += 1;
+      });
+  }
+
+  startFetchingDataFromFile(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+    this.subscription = interval(10000) // Wait for 30 seconds between each request
+      .pipe(
+        switchMap(() => {
+          const currentTimestamp = moment().format('HH:mm:ss');
+          if (this.selectedOption === 'AI' && this.selectedFile) {
+            return this.dataFetchService.checkFileSQLAI(this.selectedFile, currentTimestamp, this.offset);
+          } else if (this.selectedOption === 'Regex' && this.selectedFile) {
+            return this.dataFetchService.checkFileSQLRegex(this.selectedFile, currentTimestamp, this.offset);
+          } else {
+            throw new Error('Invalid selected option');
+          }
+        })
+      )
+      .subscribe((response: any) => {
         this.updateChartData(response.records);
         this.offset += 1;
       });

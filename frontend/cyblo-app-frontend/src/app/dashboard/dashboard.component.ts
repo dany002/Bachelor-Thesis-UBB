@@ -27,6 +27,9 @@ export class DashboardComponent implements OnInit{
   selectedConnectionId: string | undefined;
   tables: String[] | undefined;
   selectedTableXSS: string | undefined;
+  selectedMode: string = 'Real-Time';
+  files: File[] | undefined;
+  selectedFile: File | undefined;
 
   ngOnInit() {
     this.getProjects();
@@ -201,7 +204,21 @@ export class DashboardComponent implements OnInit{
 
   }
 
-  openAddAuditDialog() {
+  onModeSelectionChange() {
+    if(this.selectedMode === 'Audit' && this.selectedProject){
+      this.dashboardService.getFilesByProjectId(this.selectedProject.id).subscribe(
+        (response) => {
+          console.log(response);
+          this.files = response;
+          // this.tables = response.tables;
+        }, (error) => {
+          console.error('Error:', error);
+        }
+      );
+    }
+  }
 
+  onFileSelectionChange() {
+    console.log("FILEEE", this.selectedFile);
   }
 }
