@@ -10,6 +10,7 @@ import {AddConnectionDialogComponent} from "../add-connection-dialog/add-connect
 import {Connection} from "../models/Connection";
 import {ManageEntitiesDialogComponent} from "../manage-entities-dialog/manage-entities-dialog.component";
 import {error} from "@angular/compiler-cli/src/transformers/util";
+import {ManualSelectionDialogComponent} from "../manual-selection-dialog/manual-selection-dialog.component";
 
 @Component({
   selector: 'app-dashboard',
@@ -30,6 +31,13 @@ export class DashboardComponent implements OnInit{
   selectedMode: string = 'Real-Time';
   files: File[] | undefined;
   selectedFile: File | undefined;
+  displayedColumns: string[] = ['metric', 'lstm', 'regex'];
+  confusionMatrixColumns: string[] = ['label', 'predicted_0', 'predicted_1'];
+  responseData: any;
+  loading: boolean = true;
+  pathManual: string | undefined;
+  numberOfRecords: string | undefined;
+  fileSize: string | undefined;
 
   ngOnInit() {
     this.getProjects();
@@ -204,6 +212,40 @@ export class DashboardComponent implements OnInit{
 
   }
 
+  formatNumber(num: number, decimals: number = 3): string {
+    return num.toFixed(decimals);
+  }
+
+  formatPercentage(value: number): string {
+    return (value * 100).toFixed(2) + '%'; // Formats the number as percentage with two decimal places
+  }
+
+  processResponseData(response: any) {
+    this.responseData = {
+      metricData: [
+        { metric: 'Total LSTM predicted as 1', lstm: response.total_ai_predicted_1, regex: response.total_regex_predicted_1 },
+        { metric: 'Total LSTM predicted as 0', lstm: response.total_ai_predicted_0, regex: response.total_regex_predicted_0 },
+        { metric: 'Accuracy', lstm: this.formatPercentage(response.ai_accuracy), regex: this.formatPercentage(response.regex_accuracy) },
+        { metric: 'F1 Score', lstm: this.formatPercentage(response.ai_f1_score), regex: this.formatPercentage(response.regex_f1_score) },
+        { metric: 'Recall', lstm: this.formatPercentage(response.ai_recall), regex: this.formatPercentage(response.regex_recall) },
+        { metric: 'Precision', lstm: this.formatPercentage(response.ai_precision), regex: this.formatPercentage(response.regex_precision) },
+        { metric: 'Time', lstm: `${this.formatNumber(response.ai_time)} seconds`, regex: `${this.formatNumber(response.regex_time)} seconds` }
+      ],
+      ai_confusion_matrix: [
+        { label: 'Actual 0', predicted_0: response.ai_confusion_matrix[0][0], predicted_1: response.ai_confusion_matrix[0][1] },
+        { label: 'Actual 1', predicted_0: response.ai_confusion_matrix[1][0], predicted_1: response.ai_confusion_matrix[1][1] }
+      ],
+      regex_confusion_matrix: [
+        { label: 'Actual 0', predicted_0: response.regex_confusion_matrix[0][0], predicted_1: response.regex_confusion_matrix[0][1] },
+        { label: 'Actual 1', predicted_0: response.regex_confusion_matrix[1][0], predicted_1: response.regex_confusion_matrix[1][1] }
+      ]
+    };
+    this.numberOfRecords = response.total_ai_predicted_0 + response.total_ai_predicted_1;
+    this.fileSize = this.formatNumber(response.file_size / (1024*1024))
+    this.loading = false;
+  }
+
+
   onModeSelectionChange() {
     if(this.selectedMode === 'Audit' && this.selectedProject){
       this.dashboardService.getFilesByProjectId(this.selectedProject.id).subscribe(
@@ -215,6 +257,27 @@ export class DashboardComponent implements OnInit{
           console.error('Error:', error);
         }
       );
+    }
+    if(this.selectedMode === 'Manual Selection'){
+      const dialogRef = this.dialog.open(ManualSelectionDialogComponent, {
+        width: '600px'
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result) {
+          const path = result.path
+          const model_attack = result.model_attack;
+          this.pathManual = result.path.split('/').pop(); // get the file name not the whole path
+          this.dashboardService.runManualSelection(path, model_attack).subscribe(
+            (response) => {
+              console.log(response);
+              this.processResponseData(response);
+            }, (error) => {
+              console.error('Error:', error);
+            }
+          )
+        }
+      });
     }
   }
 

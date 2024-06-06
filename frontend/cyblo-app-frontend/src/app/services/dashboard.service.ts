@@ -167,4 +167,11 @@ export class DashboardService {
       timestamp: currentTimestamp
     }, {withCredentials: true});
   }
+
+  runManualSelection(path: string, model_attack: string): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/run_manual_selection`, {
+      path: path,
+      model_attack: model_attack
+    }, {withCredentials: true});
+  }
 }

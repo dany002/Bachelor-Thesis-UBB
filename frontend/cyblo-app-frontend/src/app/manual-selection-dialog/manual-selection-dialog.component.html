@@ -1,0 +1,15 @@
+<h1 mat-dialog-title>Manual Selection</h1>
+<div mat-dialog-content>
+  <mat-form-field>
+    <mat-label>Enter Path</mat-label>
+    <input matInput [(ngModel)]="path">
+  </mat-form-field>
+  <mat-form-field>
+    <mat-label>Enter Model Attack</mat-label>
+    <input matInput [(ngModel)]="model_attack">
+  </mat-form-field>
+</div>
+<div mat-dialog-actions>
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-button (click)="onRun()">Run</button>
+</div>

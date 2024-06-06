@@ -47,7 +47,7 @@ export class SqlInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
       },
       {
         data: [], // For counts of queries labeled as 0
-        label: 'Safe Queries',
+        label: 'Total Queries',
         borderColor: 'green',
         backgroundColor: 'rgba(0, 255, 0, 0.3)',
         borderWidth: 3,
@@ -106,7 +106,6 @@ export class SqlInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
           label: (context: TooltipItem<'line'>) => {
             const dataPoint = context.raw as { x: number, y: number };
             const formattedDate = moment(dataPoint.x).format('MMM D, h:mm a');
-            // return `Count: ${dataPoint.x}, ${dataPoint.y}`
             return `Count: ${dataPoint.y}, ${formattedDate}`;
           }
         }

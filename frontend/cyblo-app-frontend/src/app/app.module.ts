@@ -33,6 +33,9 @@ import { XssInjectionChartDetailedAiRegexComponent } from './xss-injection-chart
 import {MatRadioModule} from "@angular/material/radio";
 import {MatSlideToggleModule} from "@angular/material/slide-toggle";
 import {MatSliderModule} from "@angular/material/slider";
+import { ManualSelectionDialogComponent } from './manual-selection-dialog/manual-selection-dialog.component';
+import {MatTableModule} from "@angular/material/table";
+import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
 
 
 @NgModule({
@@ -52,7 +55,8 @@ import {MatSliderModule} from "@angular/material/slider";
     EditConnectionDialogComponent,
     SqlInjectionChartDetailedAiRegexComponent,
     XssInjectionChartComponent,
-    XssInjectionChartDetailedAiRegexComponent
+    XssInjectionChartDetailedAiRegexComponent,
+    ManualSelectionDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -73,6 +77,8 @@ import {MatSliderModule} from "@angular/material/slider";
     MatRadioModule,
     MatSlideToggleModule,
     MatSliderModule,
+    MatTableModule,
+    MatProgressSpinnerModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

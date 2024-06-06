@@ -9,7 +9,7 @@ from cyblo.cyblo_app.Views.UserView import RegisterUser, LogoutUser, LoginUser, 
 from cyblo.cyblo_app.Views.UtilsView import create_external_db_connection, get_connections_for_a_project, \
     get_connections_for_a_specific_user, edit_connection, delete_connection, get_tables_for_a_connection, \
     get_records_with_ai_sql, get_records_with_regex_sql, get_records_with_ai_xss, get_records_with_regex_xss, \
-    check_file_sql_regex, check_file_sql_ai, check_file_xss_regex, check_file_xss_ai
+    check_file_sql_regex, check_file_sql_ai, check_file_xss_regex, check_file_xss_ai, run_manual_selection
 
 urlpatterns = [
     path('register', RegisterUser.as_view(), name='register-user'),
@@ -42,4 +42,5 @@ urlpatterns = [
     path('check_file_sql_ai/<uuid:file_id>', check_file_sql_ai, name='check_file_sql_ai'),
     path('check_file_xss_regex/<uuid:file_id>', check_file_xss_regex, name='check_file_xss_regex'),
     path('check_file_xss_ai/<uuid:file_id>', check_file_xss_ai, name='check_file_xss_ai'),
+    path('run_manual_selection', run_manual_selection, name='run-run_manual_selection'),
 ]

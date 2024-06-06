@@ -3,6 +3,7 @@ import os
 import pickle
 import random
 import re
+import time
 import urllib.parse
 from datetime import datetime, timedelta
 
@@ -20,6 +21,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
 
 from cyblo.cyblo_app.models import Project, ExternalDBConnection, File
 from cyblo.cyblo_app.serializers import ExternalDBConnectionSerializer
+from sklearn.metrics import confusion_matrix, accuracy_score, f1_score, recall_score, precision_score
 
 with open('models/tokenizer_sql.pickle', 'rb') as handle:
     tokenizer = pickle.load(handle)
@@ -677,4 +679,111 @@ def detect_xss_injection(xss_query):
 
     return False
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def run_manual_selection(request):
+    data = json.loads(request.body)
+    path = data.get('path', None)
+    model_attack = data.get('model_attack', None)
 
+    if not path:
+        return JsonResponse({'error': 'Path is required'}, status=400)
+
+    if not model_attack:
+        return JsonResponse({'error': 'Model attack is required'}, status=400)
+
+    results = {
+        'total_ai_predicted_1': 0,
+        'total_ai_predicted_0': 0,
+        'total_regex_predicted_1': 0,
+        'total_regex_predicted_0': 0,
+        'ai_confusion_matrix': None,
+        'regex_confusion_matrix': None,
+        'ai_accuracy': 0,
+        'regex_accuracy': 0,
+        'ai_f1_score': 0,
+        'regex_f1_score': 0,
+        'ai_recall': 0,
+        'regex_recall': 0,
+        'ai_precision': 0,
+        'regex_precision': 0,
+        'ai_time': 0,
+        'regex_time': 0
+    }
+
+    try:
+        with open(path, 'r') as file:
+            queries = []
+            true_labels = []
+            for line in file:
+                parts = line.rsplit(',', 1)
+                if len(parts) != 2:
+                    continue  # Skip lines that don't match the expected format
+                query = parts[0].strip()
+                is_attack = int(parts[1].strip())
+                queries.append(query)
+                true_labels.append(is_attack)
+
+            # AI-based XSS Detection
+            if model_attack == "XSS":
+                start_time = time.time()
+                X_seq = tokenizer_xss.texts_to_sequences(queries)
+                X_pad = pad_sequences(X_seq, maxlen=max_len_xss, padding='post')
+                predictions = model_xss.predict(X_pad)
+                binary_predictions = (predictions > 0.5).astype(int).squeeze()
+                results['ai_time'] = time.time() - start_time
+
+                ai_true_labels = true_labels
+                ai_predictions = binary_predictions.tolist()
+
+                results['total_ai_predicted_1'] = sum(ai_predictions)
+                results['total_ai_predicted_0'] = len(ai_predictions) - results['total_ai_predicted_1']
+
+                # Regex-based XSS Detection
+                start_time = time.time()
+                regex_predictions = [int(detect_xss_injection(query)) for query in queries]
+                results['regex_time'] = time.time() - start_time
+            else:
+                start_time = time.time()
+                X_seq = tokenizer.texts_to_sequences(queries)
+                X_pad = pad_sequences(X_seq, maxlen=max_len, padding='post')
+                predictions = model.predict(X_pad)
+                binary_predictions = (predictions > 0.5).astype(int).squeeze()
+                results['ai_time'] = time.time() - start_time
+
+                ai_true_labels = true_labels
+                ai_predictions = binary_predictions.tolist()
+
+                results['total_ai_predicted_1'] = sum(ai_predictions)
+                results['total_ai_predicted_0'] = len(ai_predictions) - results['total_ai_predicted_1']
+
+                # Regex-based XSS Detection
+                start_time = time.time()
+                regex_predictions = [int(detect_sql_injection(query)) for query in queries]
+                results['regex_time'] = time.time() - start_time
+
+            results['total_regex_predicted_1'] = sum(regex_predictions)
+            results['total_regex_predicted_0'] = len(regex_predictions) - results['total_regex_predicted_1']
+
+            # Calculate Metrics for AI
+            results['ai_confusion_matrix'] = confusion_matrix(ai_true_labels, ai_predictions).tolist()
+            results['ai_accuracy'] = accuracy_score(ai_true_labels, ai_predictions)
+            results['ai_f1_score'] = f1_score(ai_true_labels, ai_predictions)
+            results['ai_recall'] = recall_score(ai_true_labels, ai_predictions)
+            results['ai_precision'] = precision_score(ai_true_labels, ai_predictions)
+
+            # Calculate Metrics for Regex
+            results['regex_confusion_matrix'] = confusion_matrix(true_labels, regex_predictions).tolist()
+            results['regex_accuracy'] = accuracy_score(true_labels, regex_predictions)
+            results['regex_f1_score'] = f1_score(true_labels, regex_predictions)
+            results['regex_recall'] = recall_score(true_labels, regex_predictions)
+            results['regex_precision'] = precision_score(true_labels, regex_predictions)
+
+            # Size
+            results['file_size'] = os.path.getsize(path)
+
+        return JsonResponse(results, status=200)
+    except FileNotFoundError:
+        return JsonResponse({'error': 'File not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

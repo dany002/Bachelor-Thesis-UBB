@@ -16,6 +16,7 @@
       <mat-radio-group [(ngModel)]="selectedMode" (change)="onModeSelectionChange()" class="radio-group">
         <mat-radio-button value="Real-Time" class="radio-button">Realtime</mat-radio-button>
         <mat-radio-button value="Audit" class="radio-button">Audit</mat-radio-button>
+        <mat-radio-button value="Manual Selection" class="radio-button">Manual Selection</mat-radio-button>
       </mat-radio-group>
 
 <!--      <div class="spacer"></div>-->
@@ -50,14 +51,12 @@
           </mat-select>
         </mat-form-field>
       </ng-container>
-
-      <mat-form-field appearance="fill">
-        <mat-label>Select Option</mat-label>
-        <mat-select [(ngModel)]="selectedOption" (selectionChange)="onOptionSelectionChange()">
-          <mat-option value="AI">AI</mat-option>
-          <mat-option value="Regex">Regex</mat-option>
-        </mat-select>
-      </mat-form-field>
+      <ng-container *ngIf="selectedMode !== 'Manual Selection'">
+          <mat-radio-group [(ngModel)]="selectedOption" (change)="onOptionSelectionChange()" class="radio-group">
+            <mat-radio-button value="AI" class="radio-button">LSTM</mat-radio-button>
+            <mat-radio-button value="Regex" class="radio-button">Regex</mat-radio-button>
+          </mat-radio-group>
+      </ng-container>
       <button mat-raised-button color="warn" class="logout-button" (click)="logout()">Logout</button>
     </div>
   </div>
@@ -100,7 +99,93 @@
     >
     </app-xss-injection-chart-detailed-ai-regex>
   </div>
+  <div class="content" *ngIf="loading && this.selectedMode==='Manual Selection'; else loadedContent">
+    <mat-spinner></mat-spinner>
+  </div>
 
+  <ng-template #loadedContent>
+    <div *ngIf="responseData">
+      <h2>Results for "{{ pathManual }}"</h2>
+      <div>
+        <p>Number of Records: {{ numberOfRecords }}</p>
+        <p>File Size: {{ fileSize }} MB</p>
+      </div>
+      <table mat-table [dataSource]="responseData.metricData" class="mat-elevation-z8" matSort>
+        <!-- Metric Column -->
+        <ng-container matColumnDef="metric">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Metric </th>
+          <td mat-cell *matCellDef="let element"> {{element.metric}} </td>
+        </ng-container>
+
+        <!-- LSTM Column -->
+        <ng-container matColumnDef="lstm">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> LSTM </th>
+          <td mat-cell *matCellDef="let element"> {{element.lstm}} </td>
+        </ng-container>
+
+        <!-- Regex Column -->
+        <ng-container matColumnDef="regex">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Regex </th>
+          <td mat-cell *matCellDef="let element"> {{element.regex}} </td>
+        </ng-container>
+
+        <!-- Header and Row Declarations -->
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+
+      <h3>Confusion Matrix</h3>
+      <h4>LSTM</h4>
+      <table mat-table [dataSource]="responseData.ai_confusion_matrix" class="mat-elevation-z8">
+        <!-- Label Column -->
+        <ng-container matColumnDef="label">
+          <th mat-header-cell *matHeaderCellDef> Actual/Predicted </th>
+          <td mat-cell *matCellDef="let element"> {{element.label}} </td>
+        </ng-container>
+
+        <!-- Predicted 0 Column -->
+        <ng-container matColumnDef="predicted_0">
+          <th mat-header-cell *matHeaderCellDef> Predicted 0 </th>
+          <td mat-cell *matCellDef="let element"> {{element.predicted_0}} </td>
+        </ng-container>
+
+        <!-- Predicted 1 Column -->
+        <ng-container matColumnDef="predicted_1">
+          <th mat-header-cell *matHeaderCellDef> Predicted 1 </th>
+          <td mat-cell *matCellDef="let element"> {{element.predicted_1}} </td>
+        </ng-container>
+
+        <!-- Header and Row Declarations -->
+        <tr mat-header-row *matHeaderRowDef="confusionMatrixColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: confusionMatrixColumns;"></tr>
+      </table>
+
+      <h4>Regex</h4>
+      <table mat-table [dataSource]="responseData.regex_confusion_matrix" class="mat-elevation-z8">
+        <!-- Label Column -->
+        <ng-container matColumnDef="label">
+          <th mat-header-cell *matHeaderCellDef> Actual/Predicted </th>
+          <td mat-cell *matCellDef="let element"> {{element.label}} </td>
+        </ng-container>
+
+        <!-- Predicted 0 Column -->
+        <ng-container matColumnDef="predicted_0">
+          <th mat-header-cell *matHeaderCellDef> Predicted 0 </th>
+          <td mat-cell *matCellDef="let element"> {{element.predicted_0}} </td>
+        </ng-container>
+
+        <!-- Predicted 1 Column -->
+        <ng-container matColumnDef="predicted_1">
+          <th mat-header-cell *matHeaderCellDef> Predicted 1 </th>
+          <td mat-cell *matCellDef="let element"> {{element.predicted_1}} </td>
+        </ng-container>
+
+        <!-- Header and Row Declarations -->
+        <tr mat-header-row *matHeaderRowDef="confusionMatrixColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: confusionMatrixColumns;"></tr>
+      </table>
+    </div>
+  </ng-template>
   <ng-template #noProjects>
     <div class="no-projects">
       <p>You don't have any projects now. Add your first project!</p>
