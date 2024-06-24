@@ -23,15 +23,32 @@ from cyblo.cyblo_app.models import Project, ExternalDBConnection, File
 from cyblo.cyblo_app.serializers import ExternalDBConnectionSerializer
 from sklearn.metrics import confusion_matrix, accuracy_score, f1_score, recall_score, precision_score
 
+# LSTM SQL
 with open('models/tokenizer_sql.pickle', 'rb') as handle:
     tokenizer = pickle.load(handle)
 model = load_model('models/best_model.h5')
 max_len = 544  # Replace this with the max_len value used during training
 
+# LSTM XSS
 with open('models/tokenizer_xss.pickle', 'rb') as handle:
     tokenizer_xss = pickle.load(handle)
 model_xss = load_model('models/best_model_xss_hard_dataset.h5')
 max_len_xss = 606
+
+# Random XSS
+with open('models/vectorizer_xss.pickle', 'rb') as handle:
+    vectorizer_xss = pickle.load(handle)
+
+with open('models/random_forest_xss_model.pickle', 'rb') as handle:
+    model_xss_random_forest = pickle.load(handle)
+
+# Random SQLI
+with open('models/vectorizer_sqli.pickle', 'rb') as handle:
+    vectorizer_sql = pickle.load(handle)
+
+with open('models/best_random_forest_sqli_model.pickle', 'rb') as handle:
+    model_sql_random_forest = pickle.load(handle)
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -695,19 +712,27 @@ def run_manual_selection(request):
     results = {
         'total_ai_predicted_1': 0,
         'total_ai_predicted_0': 0,
+        'total_random_predicted_1': 0,
+        'total_random_predicted_0': 0,
         'total_regex_predicted_1': 0,
         'total_regex_predicted_0': 0,
         'ai_confusion_matrix': None,
+        'random_confusion_matrix': None,
         'regex_confusion_matrix': None,
         'ai_accuracy': 0,
+        'random_accuracy': 0,
         'regex_accuracy': 0,
         'ai_f1_score': 0,
+        'random_f1_score': 0,
         'regex_f1_score': 0,
         'ai_recall': 0,
+        'random_recall': 0,
         'regex_recall': 0,
         'ai_precision': 0,
+        'random_precision': 0,
         'regex_precision': 0,
         'ai_time': 0,
+        'random_time': 0,
         'regex_time': 0
     }
 
@@ -720,12 +745,19 @@ def run_manual_selection(request):
                 if len(parts) != 2:
                     continue  # Skip lines that don't match the expected format
                 query = parts[0].strip()
-                is_attack = int(parts[1].strip())
+                try:
+                    is_attack = int(parts[1].strip())
+                    if is_attack not in (0, 1):
+                        continue  # Skip lines where the label is not 0 or 1
+                except ValueError:
+                    continue  # Skip lines where the label is not an integer
                 queries.append(query)
                 true_labels.append(is_attack)
 
             # AI-based XSS Detection
             if model_attack == "XSS":
+                #LSTM Based XSS Detection
+
                 start_time = time.time()
                 X_seq = tokenizer_xss.texts_to_sequences(queries)
                 X_pad = pad_sequences(X_seq, maxlen=max_len_xss, padding='post')
@@ -739,10 +771,26 @@ def run_manual_selection(request):
                 results['total_ai_predicted_1'] = sum(ai_predictions)
                 results['total_ai_predicted_0'] = len(ai_predictions) - results['total_ai_predicted_1']
 
+                # Random Forests based xss detection
+
+                start_time = time.time()
+
+                X_tfidf = vectorizer_xss.transform(queries)
+                predictions = model_xss_random_forest.predict(X_tfidf)
+
+                results['random_time'] = time.time() - start_time
+
+                ai_true_labels = true_labels
+                random_predictions = predictions.tolist()
+
+                results['total_random_predicted_1'] = sum(random_predictions)
+                results['total_random_predicted_0'] = len(random_predictions) - results['total_random_predicted_1']
+
                 # Regex-based XSS Detection
                 start_time = time.time()
                 regex_predictions = [int(detect_xss_injection(query)) for query in queries]
                 results['regex_time'] = time.time() - start_time
+
             else:
                 start_time = time.time()
                 X_seq = tokenizer.texts_to_sequences(queries)
@@ -759,6 +807,20 @@ def run_manual_selection(request):
 
                 # Regex-based XSS Detection
                 start_time = time.time()
+
+                X_tfidf = vectorizer_sql.transform(queries)
+                predictions = model_sql_random_forest.predict(X_tfidf)
+
+                results['random_time'] = time.time() - start_time
+
+                ai_true_labels = true_labels
+                random_predictions = predictions.tolist()
+
+                results['total_random_predicted_1'] = sum(random_predictions)
+                results['total_random_predicted_0'] = len(random_predictions) - results['total_random_predicted_1']
+
+                # Regex-based XSS Detection
+                start_time = time.time()
                 regex_predictions = [int(detect_sql_injection(query)) for query in queries]
                 results['regex_time'] = time.time() - start_time
 
@@ -771,6 +833,13 @@ def run_manual_selection(request):
             results['ai_f1_score'] = f1_score(ai_true_labels, ai_predictions)
             results['ai_recall'] = recall_score(ai_true_labels, ai_predictions)
             results['ai_precision'] = precision_score(ai_true_labels, ai_predictions)
+
+            # Calculate Metrics for Random Forests
+            results['random_confusion_matrix'] = confusion_matrix(ai_true_labels, random_predictions).tolist()
+            results['random_accuracy'] = accuracy_score(ai_true_labels, random_predictions)
+            results['random_f1_score'] = f1_score(ai_true_labels, random_predictions)
+            results['random_recall'] = recall_score(ai_true_labels, random_predictions)
+            results['random_precision'] = precision_score(ai_true_labels, random_predictions)
 
             # Calculate Metrics for Regex
             results['regex_confusion_matrix'] = confusion_matrix(true_labels, regex_predictions).tolist()
@@ -785,5 +854,235 @@ def run_manual_selection(request):
         return JsonResponse(results, status=200)
     except FileNotFoundError:
         return JsonResponse({'error': 'File not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_records_with_random_forests_xss(request):
+    data = json.loads(request.body)
+    table = data.get('table')
+    connection_id = data.get('connection_id')
+    current_timestamp = data.get('current_timestamp')
+    offset = data.get('offset', 0)
+
+    if not connection_id:
+        return JsonResponse({'error': 'Connection ID is required'}, status=400)
+
+    if not current_timestamp:
+        return JsonResponse({'error': 'Current timestamp is required'}, status=400)
+
+    try:
+        connection_details = ExternalDBConnection.objects.get(id=connection_id)
+    except ExternalDBConnection.DoesNotExist:
+        return JsonResponse({'error': 'Invalid connection ID'}, status=400)
+
+    try:
+        # Establish a connection to the external database
+        conn = psycopg2.connect(
+            host=connection_details.host,
+            port=connection_details.port,
+            user=connection_details.username,
+            password=connection_details.password,
+            database=connection_details.database
+        )
+        cursor = conn.cursor()
+
+        # Assuming current_timestamp is in the format 'HH:MM'
+        current_datetime = datetime.strptime(current_timestamp, '%H:%M')
+
+        # Calculate the start and end timestamps based on the offset
+        start_time = current_datetime + timedelta(seconds=offset * 100)
+        end_time = start_time + timedelta(seconds=100)
+
+        # Convert to strings for SQL query
+        start_time_str = start_time.strftime('%H:%M:%S')
+        end_time_str = end_time.strftime('%H:%M:%S')
+
+        cursor.execute(f"""
+            SELECT query, timestamp 
+            FROM {table} 
+            WHERE timestamp::time >= %s AND timestamp::time < %s
+            ORDER BY timestamp
+            """, [start_time_str, end_time_str])
+
+        records = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        records = [{'query': record[0], 'timestamp': record[1]} for record in records]
+
+        # Preprocess and predict
+        queries = [record['query'] for record in records]
+        X_tfidf = vectorizer_xss.transform(queries)
+        predictions = model_xss_random_forest.predict(X_tfidf)
+
+        # Add predictions to records
+        for i, record in enumerate(records):
+            record['prediction'] = int(predictions[i])
+
+        return JsonResponse({'records': records})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def check_file_xss_random(request, file_id):
+    data = json.loads(request.body)
+    page_number = data.get('page', 1)
+    timestamp = data.get('timestamp', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    if not file_id:
+        return JsonResponse({'error': 'File ID is required'}, status=400)
+
+    try:
+        file = File.objects.get(id=file_id)
+    except File.DoesNotExist:
+        return JsonResponse({'error': 'Invalid file ID'}, status=400)
+
+    try:
+        file_path = os.path.join(os.getenv('SECURE_PATH_FOR_FILES'), str(file_id))
+        page_size = random.randint(100, 200)
+        offset = (page_number - 1) * page_size
+
+        records = []
+        with open(file_path, 'r') as file:
+            # Skip lines until offset
+            for _ in range(offset):
+                file.readline()
+
+            # Read lines for the current page
+            for _ in range(page_size):
+                line = file.readline().strip()  # Strip to remove leading/trailing whitespace
+                if not line:
+                    break
+                records.append({'query': line,  'timestamp': timestamp})
+
+            # Preprocess and predict
+            queries = [record['query'] for record in records]
+            X_tfidf = vectorizer_xss.transform(queries)
+            predictions = model_xss_random_forest.predict(X_tfidf)
+
+            # Add predictions to records
+            for i, record in enumerate(records):
+                record['prediction'] = int(predictions[i])
+
+        return JsonResponse({'records': records})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_records_with_random_forests_sql(request):
+    data = json.loads(request.body)
+    table = data.get('table')
+    connection_id = data.get('connection_id')
+    current_timestamp = data.get('current_timestamp')
+    offset = data.get('offset', 0)
+
+    if not connection_id:
+        return JsonResponse({'error': 'Connection ID is required'}, status=400)
+
+    if not current_timestamp:
+        return JsonResponse({'error': 'Current timestamp is required'}, status=400)
+
+    try:
+        connection_details = ExternalDBConnection.objects.get(id=connection_id)
+    except ExternalDBConnection.DoesNotExist:
+        return JsonResponse({'error': 'Invalid connection ID'}, status=400)
+
+    try:
+        # Establish a connection to the external database
+        conn = psycopg2.connect(
+            host=connection_details.host,
+            port=connection_details.port,
+            user=connection_details.username,
+            password=connection_details.password,
+            database=connection_details.database
+        )
+        cursor = conn.cursor()
+
+        # Assuming current_timestamp is in the format 'HH:MM'
+        current_datetime = datetime.strptime(current_timestamp, '%H:%M')
+
+        # Calculate the start and end timestamps based on the offset
+        start_time = current_datetime + timedelta(seconds=offset * 100)
+        end_time = start_time + timedelta(seconds=100)
+
+        # Convert to strings for SQL query
+        start_time_str = start_time.strftime('%H:%M:%S')
+        end_time_str = end_time.strftime('%H:%M:%S')
+
+        cursor.execute(f"""
+            SELECT query, timestamp 
+            FROM {table} 
+            WHERE timestamp::time >= %s AND timestamp::time < %s
+            ORDER BY timestamp
+            """, [start_time_str, end_time_str])
+
+        records = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        records = [{'query': record[0], 'timestamp': record[1]} for record in records]
+
+        # Preprocess and predict
+        queries = [record['query'] for record in records]
+        X_tfidf = vectorizer_sql.transform(queries)
+        predictions = model_sql_random_forest.predict(X_tfidf)
+
+        # Add predictions to records
+        for i, record in enumerate(records):
+            record['prediction'] = int(predictions[i])
+
+        return JsonResponse({'records': records})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def check_file_sql_random(request, file_id):
+    data = json.loads(request.body)
+    page_number = data.get('page', 1)
+    timestamp = data.get('timestamp', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    if not file_id:
+        return JsonResponse({'error': 'File ID is required'}, status=400)
+
+    try:
+        file = File.objects.get(id=file_id)
+    except File.DoesNotExist:
+        return JsonResponse({'error': 'Invalid file ID'}, status=400)
+
+    try:
+        file_path = os.path.join(os.getenv('SECURE_PATH_FOR_FILES'), str(file_id))
+        page_size = random.randint(100, 200)
+        offset = (page_number - 1) * page_size
+
+        records = []
+        with open(file_path, 'r') as file:
+            # Skip lines until offset
+            for _ in range(offset):
+                file.readline()
+
+            # Read lines for the current page
+            for _ in range(page_size):
+                line = file.readline().strip()  # Strip to remove leading/trailing whitespace
+                if not line:
+                    break
+                records.append({'query': line, 'timestamp': timestamp})
+
+            # Preprocess and predict
+            queries = [record['query'] for record in records]
+            X_tfidf = vectorizer_sql.transform(queries)
+            predictions = model_sql_random_forest.predict(X_tfidf)
+
+            # Add predictions to records
+            for i, record in enumerate(records):
+                record['prediction'] = int(predictions[i])
+
+        return JsonResponse({'records': records})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

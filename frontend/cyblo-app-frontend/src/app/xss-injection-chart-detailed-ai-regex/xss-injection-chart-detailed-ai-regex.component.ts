@@ -52,6 +52,15 @@ export class XssInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
         borderWidth: 3,
         pointRadius: 3,
         fill: false
+      },
+      {
+        data: [],
+        label: 'XSS Attacks Detected With Random Forests',
+        borderColor: 'blue',
+        backgroundColor: 'rgba(0, 0, 255, 0.5)',
+        borderWidth: 3,
+        pointRadius: 3,
+        fill: false
       }
     ]
   };
@@ -140,6 +149,7 @@ export class XssInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
     // Clear existing data
     this.lineChartData.datasets[0].data = [];
     this.lineChartData.datasets[1].data = [];
+    this.lineChartData.datasets[2].data = [];
     this.offset = 0;
 
     if (this.chart) {
@@ -165,12 +175,13 @@ export class XssInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
           // const currentTimestamp = moment().format('HH:mm:ss'); // Update current timestamp for each request
           return forkJoin([
             this.dataFetchService.fetchRecordsForAIXSS(this.selectedTableXSS!, currentTimestamp, this.connectionId!, this.offset),
-            this.dataFetchService.fetchRecordsForRegexXSS(this.selectedTableXSS!, currentTimestamp, this.connectionId!, this.offset)
+            this.dataFetchService.fetchRecordsForRegexXSS(this.selectedTableXSS!, currentTimestamp, this.connectionId!, this.offset),
+            this.dataFetchService.fetchRecordsForRandomXSS(this.selectedTableXSS!, currentTimestamp, this.connectionId!, this.offset)
           ]);
         })
       )
-      .subscribe(([aiResponse, regexResponse]: [any, any]) => {
-        this.updateChartData(aiResponse.records, regexResponse.records);
+      .subscribe(([aiResponse, regexResponse, forestsResponse]: [any, any, any]) => {
+        this.updateChartData(aiResponse.records, regexResponse.records, forestsResponse.records);
         this.offset += 1;
       });
   }
@@ -187,37 +198,42 @@ export class XssInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
           if(this.selectedFile)
           return forkJoin([
             this.dataFetchService.checkFileXSSAI(this.selectedFile, currentTimestamp, this.offset),
-            this.dataFetchService.checkFileXSSAI(this.selectedFile, currentTimestamp, this.offset)
+            this.dataFetchService.checkFileXSSRegex(this.selectedFile, currentTimestamp, this.offset),
+            this.dataFetchService.checkFileXSSRandom(this.selectedFile, currentTimestamp, this.offset),
           ]);
           else
             throw new Error('Invalid selected option');
         })
       )
-      .subscribe(([aiResponse, regexResponse]: [any, any]) => {
-        this.updateChartData(aiResponse.records, regexResponse.records);
+      .subscribe(([aiResponse, regexResponse, forestsResponse]: [any, any, any]) => {
+        this.updateChartData(aiResponse.records, regexResponse.records, forestsResponse.records);
         this.offset += 1;
       });
   }
 
 
 
-  updateChartData(aiRecords: any[], regexRecords: any[]): void {
+  updateChartData(aiRecords: any[], regexRecords: any[], forestsRecords: any[]): void {
     const currentTimestamp = moment().valueOf(); // Current time on the frontend
 
     const aiPredictions = aiRecords.map(record => record.prediction);
     const regexPredictions = regexRecords.map(record => record.prediction);
+    const forestPredictions = forestsRecords.map(record => record.prediction);
 
     // Count SQL Injection detections for AI and Regex
     const sqliCountAI = aiPredictions.filter(prediction => prediction === 1).length;
     const sqliCountRegex = regexPredictions.filter(prediction => prediction === 1).length;
+    const sqliCountForest = forestPredictions.filter(prediction => prediction === 1).length;
 
     // Create point data for SQL Injection detections
     const pointDataXSSAI = { x: currentTimestamp, y: sqliCountAI };
     const pointDataXSSRegex = { x: currentTimestamp, y: sqliCountRegex };
+    const pointDataXSSForest = { x: currentTimestamp, y: sqliCountForest };
 
     // Append new data to existing datasets
     this.lineChartData.datasets[0].data.push(pointDataXSSAI);
     this.lineChartData.datasets[1].data.push(pointDataXSSRegex);
+    this.lineChartData.datasets[2].data.push(pointDataXSSForest);
 
     // Update chart options
     this.lineChartOptions.scales!['x']!.min = moment().valueOf();

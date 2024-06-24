@@ -113,6 +113,15 @@ export class DashboardService {
     }, {withCredentials: true});
   }
 
+  fetchRecordsForRandomSQL(table: string, currentTimestamp: string, connection_id: string, offset: number): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/get_records_with_random_forests_sql`, {
+      table: table,
+      current_timestamp: currentTimestamp,
+      connection_id: connection_id,
+      offset: offset
+    }, {withCredentials: true});
+  }
+
   fetchRecordsForRegexSQL(table: string, currentTimestamp: string, connection_id: string, offset: number): Observable<any> {
     return this.http.post<any>(`${this.backendUrl}/get_records_with_regex_sql`, {
       table: table,
@@ -124,6 +133,15 @@ export class DashboardService {
 
   fetchRecordsForAIXSS(table: string, currentTimestamp: string, connection_id: string, offset: number): Observable<any> {
     return this.http.post<any>(`${this.backendUrl}/get_records_with_ai_xss`, {
+      table: table,
+      current_timestamp: currentTimestamp,
+      connection_id: connection_id,
+      offset: offset
+    }, {withCredentials: true});
+  }
+
+  fetchRecordsForRandomXSS(table: string, currentTimestamp: string, connection_id: string, offset: number): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/get_records_with_random_forests_xss`, {
       table: table,
       current_timestamp: currentTimestamp,
       connection_id: connection_id,
@@ -154,6 +172,13 @@ export class DashboardService {
     }, {withCredentials: true});
   }
 
+  checkFileSQLRandom(file_id: string, currentTimestamp: string, page: number): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/check_file_sql_random/${file_id}`, {
+      page: page,
+      timestamp: currentTimestamp
+    }, {withCredentials: true});
+  }
+
   checkFileXSSRegex(file_id: string, currentTimestamp: string, page: number): Observable<any> {
     return this.http.post<any>(`${this.backendUrl}/check_file_xss_regex/${file_id}`, {
       page: page,
@@ -163,6 +188,13 @@ export class DashboardService {
 
   checkFileXSSAI(file_id: string, currentTimestamp: string, page: number): Observable<any> {
     return this.http.post<any>(`${this.backendUrl}/check_file_xss_ai/${file_id}`, {
+      page: page,
+      timestamp: currentTimestamp
+    }, {withCredentials: true});
+  }
+
+  checkFileXSSRandom(file_id: string, currentTimestamp: string, page: number): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/check_file_xss_random/${file_id}`, {
       page: page,
       timestamp: currentTimestamp
     }, {withCredentials: true});

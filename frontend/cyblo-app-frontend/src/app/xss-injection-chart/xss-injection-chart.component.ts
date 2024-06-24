@@ -169,7 +169,10 @@ export class XssInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
             return this.dataFetchService.fetchRecordsForAIXSS(this.selectedTableXSS!, currentTimestamp, this.connectionId!, this.offset);
           } else if (this.selectedOption === 'Regex') {
             return this.dataFetchService.fetchRecordsForRegexXSS(this.selectedTableXSS!, currentTimestamp, this.connectionId!, this.offset);
-          } else {
+          } else if (this.selectedOption === 'Forest') {
+            return this.dataFetchService.fetchRecordsForRandomXSS(this.selectedTableXSS!, currentTimestamp, this.connectionId!, this.offset);
+          }
+          else {
             throw new Error('Invalid selected option');
           }
         })
@@ -192,6 +195,8 @@ export class XssInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
             return this.dataFetchService.checkFileXSSAI(this.selectedFile, currentTimestamp, this.offset);
           } else if (this.selectedOption === 'Regex' && this.selectedFile) {
             return this.dataFetchService.checkFileXSSRegex(this.selectedFile, currentTimestamp, this.offset);
+          } else if (this.selectedOption === 'Forest' && this.selectedFile) {
+            return this.dataFetchService.checkFileXSSRandom(this.selectedFile, currentTimestamp, this.offset);
           } else {
             throw new Error('Invalid selected option');
           }

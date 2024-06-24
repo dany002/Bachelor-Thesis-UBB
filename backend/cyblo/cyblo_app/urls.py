@@ -9,7 +9,9 @@ from cyblo.cyblo_app.Views.UserView import RegisterUser, LogoutUser, LoginUser, 
 from cyblo.cyblo_app.Views.UtilsView import create_external_db_connection, get_connections_for_a_project, \
     get_connections_for_a_specific_user, edit_connection, delete_connection, get_tables_for_a_connection, \
     get_records_with_ai_sql, get_records_with_regex_sql, get_records_with_ai_xss, get_records_with_regex_xss, \
-    check_file_sql_regex, check_file_sql_ai, check_file_xss_regex, check_file_xss_ai, run_manual_selection
+    check_file_sql_regex, check_file_sql_ai, check_file_xss_regex, check_file_xss_ai, run_manual_selection, \
+    get_records_with_random_forests_xss, check_file_xss_random, get_records_with_random_forests_sql, \
+    check_file_sql_random
 
 urlpatterns = [
     path('register', RegisterUser.as_view(), name='register-user'),
@@ -35,12 +37,16 @@ urlpatterns = [
     path('connections/delete/<uuid:connection_id>', delete_connection, name='delete_connection'),
     path('connections/<uuid:connection_id>/tables', get_tables_for_a_connection, name='get_tables_for_a_connection'),
     path('get_records_with_ai_sql', get_records_with_ai_sql, name='get_records_with_ai_sql'),
+    path('get_records_with_random_forests_sql', get_records_with_random_forests_sql, name='get_records_with_random_forests_sql'),
     path('get_records_with_regex_sql', get_records_with_regex_sql, name='get_records_with_regex_sql'),
     path('get_records_with_ai_xss', get_records_with_ai_xss, name='get_records_with_ai_xss'),
+    path('get_records_with_random_forests_xss', get_records_with_random_forests_xss, name='get_records_with_random_forests_xss'),
     path('get_records_with_regex_xss', get_records_with_regex_xss, name='get_records_with_regex_xss'),
     path('check_file_sql_regex/<uuid:file_id>', check_file_sql_regex, name='check_file_sql_regex'),
     path('check_file_sql_ai/<uuid:file_id>', check_file_sql_ai, name='check_file_sql_ai'),
+    path('check_file_sql_random/<uuid:file_id>', check_file_sql_random, name='check_file_sql_random'),
     path('check_file_xss_regex/<uuid:file_id>', check_file_xss_regex, name='check_file_xss_regex'),
     path('check_file_xss_ai/<uuid:file_id>', check_file_xss_ai, name='check_file_xss_ai'),
+    path('check_file_xss_random/<uuid:file_id>', check_file_xss_random, name='check_file_xss_random'),
     path('run_manual_selection', run_manual_selection, name='run-run_manual_selection'),
 ]
