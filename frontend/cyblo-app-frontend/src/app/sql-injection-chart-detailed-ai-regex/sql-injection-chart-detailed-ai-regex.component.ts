@@ -175,9 +175,9 @@ export class SqlInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
           // const currentTimestamp = moment().format('HH:mm:ss'); // Update current timestamp for each request
           if(this.selectedFile)
             return forkJoin([
-            this.dataFetchService.checkFileSQLAI(this.selectedFile, currentTimestamp, this.offset),
+            this.dataFetchService.checkFileSQLBiLSTM(this.selectedFile, currentTimestamp, this.offset),
             this.dataFetchService.checkFileSQLRegex(this.selectedFile, currentTimestamp, this.offset),
-            this.dataFetchService.checkFileSQLRandom(this.selectedFile, currentTimestamp, this.offset)
+            this.dataFetchService.checkFileSQLRandomForest(this.selectedFile, currentTimestamp, this.offset)
           ]);
           else
             throw new Error('Invalid selected option');
@@ -199,9 +199,9 @@ export class SqlInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
         switchMap(() => {
           // const currentTimestamp = moment().format('HH:mm:ss'); // Update current timestamp for each request
           return forkJoin([
-            this.dataFetchService.fetchRecordsForAISQL(this.selectedTable!, currentTimestamp, this.connectionId!, this.offset),
+            this.dataFetchService.fetchRecordsForBiLSTMSQL(this.selectedTable!, currentTimestamp, this.connectionId!, this.offset),
             this.dataFetchService.fetchRecordsForRegexSQL(this.selectedTable!, currentTimestamp, this.connectionId!, this.offset),
-            this.dataFetchService.fetchRecordsForRandomSQL(this.selectedTable!, currentTimestamp, this.connectionId!, this.offset)
+            this.dataFetchService.fetchRecordsForRandomForestSQL(this.selectedTable!, currentTimestamp, this.connectionId!, this.offset)
           ]);
         })
       )

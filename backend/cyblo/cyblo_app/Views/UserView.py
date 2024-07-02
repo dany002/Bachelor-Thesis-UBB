@@ -24,6 +24,10 @@ class LoginUser(APIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     def post(self, request):
+
+        response = Response()
+        response.delete_cookie('jwt')
+
         password = request.data.get('password', None)
         username_or_email = request.data.get('username', None)
         if not username_or_email or not password:
@@ -65,6 +69,8 @@ def check_token(request):
     try:
         # Use JWTAuthentication to validate the token
         authenticated_user, jwt_value = JWTAuthentication().authenticate(request)
+        print(authenticated_user)
+        print(jwt_value)
         if not authenticated_user or not jwt_value:
             return Response({'error': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
 

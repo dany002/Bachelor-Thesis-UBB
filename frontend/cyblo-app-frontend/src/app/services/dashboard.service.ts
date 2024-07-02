@@ -104,8 +104,9 @@ export class DashboardService {
     return this.http.get(`${this.backendUrl}/files/${id}`, { withCredentials: true });
   }
 
-  fetchRecordsForAISQL(table: string, currentTimestamp: string, connection_id: string, offset: number): Observable<any> {
-    return this.http.post<any>(`${this.backendUrl}/get_records_with_ai_sql`, {
+  // SQLi Live
+  fetchRecordsForBiLSTMSQL(table: string, currentTimestamp: string, connection_id: string, offset: number): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/get_records_with_bilstm_sql`, {
       table: table,
       current_timestamp: currentTimestamp,
       connection_id: connection_id,
@@ -113,7 +114,7 @@ export class DashboardService {
     }, {withCredentials: true});
   }
 
-  fetchRecordsForRandomSQL(table: string, currentTimestamp: string, connection_id: string, offset: number): Observable<any> {
+  fetchRecordsForRandomForestSQL(table: string, currentTimestamp: string, connection_id: string, offset: number): Observable<any> {
     return this.http.post<any>(`${this.backendUrl}/get_records_with_random_forests_sql`, {
       table: table,
       current_timestamp: currentTimestamp,
@@ -131,8 +132,10 @@ export class DashboardService {
     }, {withCredentials: true});
   }
 
-  fetchRecordsForAIXSS(table: string, currentTimestamp: string, connection_id: string, offset: number): Observable<any> {
-    return this.http.post<any>(`${this.backendUrl}/get_records_with_ai_xss`, {
+  // XSS Live
+
+  fetchRecordsForBiLSTMXSS(table: string, currentTimestamp: string, connection_id: string, offset: number): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/get_records_with_bilstm_xss`, {
       table: table,
       current_timestamp: currentTimestamp,
       connection_id: connection_id,
@@ -140,7 +143,7 @@ export class DashboardService {
     }, {withCredentials: true});
   }
 
-  fetchRecordsForRandomXSS(table: string, currentTimestamp: string, connection_id: string, offset: number): Observable<any> {
+  fetchRecordsForRandomForestXSS(table: string, currentTimestamp: string, connection_id: string, offset: number): Observable<any> {
     return this.http.post<any>(`${this.backendUrl}/get_records_with_random_forests_xss`, {
       table: table,
       current_timestamp: currentTimestamp,
@@ -158,6 +161,22 @@ export class DashboardService {
     }, {withCredentials: true});
   }
 
+  // Check File SQLi
+
+  checkFileSQLBiLSTM(file_id: string, currentTimestamp: string, page: number): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/check_file_sql_bilstm/${file_id}`, {
+      page: page,
+      timestamp: currentTimestamp
+    }, {withCredentials: true});
+  }
+
+  checkFileSQLRandomForest(file_id: string, currentTimestamp: string, page: number): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/check_file_sql_random_forests/${file_id}`, {
+      page: page,
+      timestamp: currentTimestamp
+    }, {withCredentials: true});
+  }
+
   checkFileSQLRegex(file_id: string, currentTimestamp: string, page: number): Observable<any> {
     return this.http.post<any>(`${this.backendUrl}/check_file_sql_regex/${file_id}`, {
       page: page,
@@ -165,15 +184,18 @@ export class DashboardService {
     }, {withCredentials: true});
   }
 
-  checkFileSQLAI(file_id: string, currentTimestamp: string, page: number): Observable<any> {
-    return this.http.post<any>(`${this.backendUrl}/check_file_sql_ai/${file_id}`, {
+
+  // CHECK File XSS
+
+  checkFileXSSBiLSTM(file_id: string, currentTimestamp: string, page: number): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/check_file_xss_bilstm/${file_id}`, {
       page: page,
       timestamp: currentTimestamp
     }, {withCredentials: true});
   }
 
-  checkFileSQLRandom(file_id: string, currentTimestamp: string, page: number): Observable<any> {
-    return this.http.post<any>(`${this.backendUrl}/check_file_sql_random/${file_id}`, {
+  checkFileXSSRandomForest(file_id: string, currentTimestamp: string, page: number): Observable<any> {
+    return this.http.post<any>(`${this.backendUrl}/check_file_xss_random_forests/${file_id}`, {
       page: page,
       timestamp: currentTimestamp
     }, {withCredentials: true});
@@ -186,19 +208,7 @@ export class DashboardService {
     }, {withCredentials: true});
   }
 
-  checkFileXSSAI(file_id: string, currentTimestamp: string, page: number): Observable<any> {
-    return this.http.post<any>(`${this.backendUrl}/check_file_xss_ai/${file_id}`, {
-      page: page,
-      timestamp: currentTimestamp
-    }, {withCredentials: true});
-  }
-
-  checkFileXSSRandom(file_id: string, currentTimestamp: string, page: number): Observable<any> {
-    return this.http.post<any>(`${this.backendUrl}/check_file_xss_random/${file_id}`, {
-      page: page,
-      timestamp: currentTimestamp
-    }, {withCredentials: true});
-  }
+  // MANUAL SELECTION
 
   runManualSelection(path: string, model_attack: string): Observable<any> {
     return this.http.post<any>(`${this.backendUrl}/run_manual_selection`, {

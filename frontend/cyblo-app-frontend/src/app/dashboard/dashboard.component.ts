@@ -223,28 +223,28 @@ export class DashboardComponent implements OnInit{
   processResponseData(response: any) {
     this.responseData = {
       metricData: [
-        { metric: 'Total LSTM predicted as 1', lstm: response.total_ai_predicted_1, regex: response.total_regex_predicted_1, random_forests: response.total_random_predicted_1},
-        { metric: 'Total LSTM predicted as 0', lstm: response.total_ai_predicted_0, regex: response.total_regex_predicted_0, random_forests: response.total_random_predicted_1},
-        { metric: 'Accuracy', lstm: this.formatPercentage(response.ai_accuracy), regex: this.formatPercentage(response.regex_accuracy), random_forests: this.formatPercentage(response.random_accuracy) },
-        { metric: 'F1 Score', lstm: this.formatPercentage(response.ai_f1_score), regex: this.formatPercentage(response.regex_f1_score), random_forests: this.formatPercentage(response.random_f1_score) },
-        { metric: 'Recall', lstm: this.formatPercentage(response.ai_recall), regex: this.formatPercentage(response.regex_recall), random_forests: this.formatPercentage(response.random_recall) },
-        { metric: 'Precision', lstm: this.formatPercentage(response.ai_precision), regex: this.formatPercentage(response.regex_precision), random_forests: this.formatPercentage(response.random_precision) },
-        { metric: 'Time', lstm: `${this.formatNumber(response.ai_time)} seconds`, regex: `${this.formatNumber(response.regex_time)} seconds`, random_forests: `${this.formatNumber(response.random_time)} seconds` }
+        { metric: 'Total LSTM predicted as 1', lstm: response.total_bilstm_predicted_1, regex: response.total_regex_predicted_1, random_forests: response.total_random_forest_predicted_1},
+        { metric: 'Total LSTM predicted as 0', lstm: response.total_bilstm_predicted_0, regex: response.total_regex_predicted_0, random_forests: response.total_random_forest_predicted_1},
+        { metric: 'Accuracy', lstm: this.formatPercentage(response.bilstm_accuracy), regex: this.formatPercentage(response.regex_accuracy), random_forests: this.formatPercentage(response.random_forest_accuracy) },
+        { metric: 'F1 Score', lstm: this.formatPercentage(response.bilstm_f1_score), regex: this.formatPercentage(response.regex_f1_score), random_forests: this.formatPercentage(response.random_forest_f1_score) },
+        { metric: 'Recall', lstm: this.formatPercentage(response.bilstm_recall), regex: this.formatPercentage(response.regex_recall), random_forests: this.formatPercentage(response.random_forest_recall) },
+        { metric: 'Precision', lstm: this.formatPercentage(response.bilstm_precision), regex: this.formatPercentage(response.regex_precision), random_forests: this.formatPercentage(response.random_forest_precision) },
+        { metric: 'Time', lstm: `${this.formatNumber(response.bilstm_time)} seconds`, regex: `${this.formatNumber(response.regex_time)} seconds`, random_forests: `${this.formatNumber(response.random_forest_time)} seconds` }
       ],
-      ai_confusion_matrix: [
-        { label: 'Actual 0', predicted_0: response.ai_confusion_matrix[0][0], predicted_1: response.ai_confusion_matrix[0][1] },
-        { label: 'Actual 1', predicted_0: response.ai_confusion_matrix[1][0], predicted_1: response.ai_confusion_matrix[1][1] }
+      bilstm_confusion_matrix: [
+        { label: 'Actual 0', predicted_0: response.bilstm_confusion_matrix[0][0], predicted_1: response.bilstm_confusion_matrix[0][1] },
+        { label: 'Actual 1', predicted_0: response.bilstm_confusion_matrix[1][0], predicted_1: response.bilstm_confusion_matrix[1][1] }
       ],
-      random_confusion_matrix: [
-        { label: 'Actual 0', predicted_0: response.random_confusion_matrix[0][0], predicted_1: response.random_confusion_matrix[0][1] },
-        { label: 'Actual 1', predicted_0: response.random_confusion_matrix[1][0], predicted_1: response.random_confusion_matrix[1][1] }
+      random_forest_confusion_matrix: [
+        { label: 'Actual 0', predicted_0: response.random_forest_confusion_matrix[0][0], predicted_1: response.random_forest_confusion_matrix[0][1] },
+        { label: 'Actual 1', predicted_0: response.random_forest_confusion_matrix[1][0], predicted_1: response.random_forest_confusion_matrix[1][1] }
       ],
       regex_confusion_matrix: [
         { label: 'Actual 0', predicted_0: response.regex_confusion_matrix[0][0], predicted_1: response.regex_confusion_matrix[0][1] },
         { label: 'Actual 1', predicted_0: response.regex_confusion_matrix[1][0], predicted_1: response.regex_confusion_matrix[1][1] }
       ]
     };
-    this.numberOfRecords = response.total_ai_predicted_0 + response.total_ai_predicted_1;
+    this.numberOfRecords = response.total_bilstm_predicted_0 + response.total_bilstm_predicted_1;
     this.fileSize = this.formatNumber(response.file_size / (1024*1024))
     this.loading = false;
   }

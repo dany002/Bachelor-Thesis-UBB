@@ -174,9 +174,9 @@ export class XssInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
         switchMap(() => {
           // const currentTimestamp = moment().format('HH:mm:ss'); // Update current timestamp for each request
           return forkJoin([
-            this.dataFetchService.fetchRecordsForAIXSS(this.selectedTableXSS!, currentTimestamp, this.connectionId!, this.offset),
+            this.dataFetchService.fetchRecordsForBiLSTMXSS(this.selectedTableXSS!, currentTimestamp, this.connectionId!, this.offset),
             this.dataFetchService.fetchRecordsForRegexXSS(this.selectedTableXSS!, currentTimestamp, this.connectionId!, this.offset),
-            this.dataFetchService.fetchRecordsForRandomXSS(this.selectedTableXSS!, currentTimestamp, this.connectionId!, this.offset)
+            this.dataFetchService.fetchRecordsForRandomForestXSS(this.selectedTableXSS!, currentTimestamp, this.connectionId!, this.offset)
           ]);
         })
       )
@@ -197,9 +197,9 @@ export class XssInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
           const currentTimestamp = moment().format('HH:mm:ss'); // Update current timestamp for each request
           if(this.selectedFile)
           return forkJoin([
-            this.dataFetchService.checkFileXSSAI(this.selectedFile, currentTimestamp, this.offset),
+            this.dataFetchService.checkFileXSSBiLSTM(this.selectedFile, currentTimestamp, this.offset),
             this.dataFetchService.checkFileXSSRegex(this.selectedFile, currentTimestamp, this.offset),
-            this.dataFetchService.checkFileXSSRandom(this.selectedFile, currentTimestamp, this.offset),
+            this.dataFetchService.checkFileXSSRandomForest(this.selectedFile, currentTimestamp, this.offset),
           ]);
           else
             throw new Error('Invalid selected option');

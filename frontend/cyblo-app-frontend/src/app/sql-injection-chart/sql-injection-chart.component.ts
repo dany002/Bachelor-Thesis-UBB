@@ -165,11 +165,11 @@ export class SqlInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
       .pipe(
         switchMap(() => {
           if (this.selectedOption === 'AI') {
-            return this.dataFetchService.fetchRecordsForAISQL(this.selectedTable!, currentTimestamp, this.connectionId!, this.offset);
+            return this.dataFetchService.fetchRecordsForBiLSTMSQL(this.selectedTable!, currentTimestamp, this.connectionId!, this.offset);
           } else if (this.selectedOption === 'Regex') {
             return this.dataFetchService.fetchRecordsForRegexSQL(this.selectedTable!, currentTimestamp, this.connectionId!, this.offset);
           } else if (this.selectedOption === 'Forest') {
-            return this.dataFetchService.fetchRecordsForRandomSQL(this.selectedTable!, currentTimestamp, this.connectionId!, this.offset);
+            return this.dataFetchService.fetchRecordsForRandomForestSQL(this.selectedTable!, currentTimestamp, this.connectionId!, this.offset);
           }else {
             throw new Error('Invalid selected option');
           }
@@ -191,11 +191,11 @@ export class SqlInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
         switchMap(() => {
           const currentTimestamp = moment().format('HH:mm:ss');
           if (this.selectedOption === 'AI' && this.selectedFile) {
-            return this.dataFetchService.checkFileSQLAI(this.selectedFile, currentTimestamp, this.offset);
+            return this.dataFetchService.checkFileSQLBiLSTM(this.selectedFile, currentTimestamp, this.offset);
           } else if (this.selectedOption === 'Regex' && this.selectedFile) {
             return this.dataFetchService.checkFileSQLRegex(this.selectedFile, currentTimestamp, this.offset);
           } else if (this.selectedOption === 'Forest' && this.selectedFile) {
-            return this.dataFetchService.checkFileSQLRandom(this.selectedFile, currentTimestamp, this.offset);
+            return this.dataFetchService.checkFileSQLRandomForest(this.selectedFile, currentTimestamp, this.offset);
           } else {
             throw new Error('Invalid selected option');
           }
