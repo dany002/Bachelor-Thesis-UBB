@@ -3,13 +3,62 @@ version: '3.8'
 services:
   postgres:
     image: postgres:latest
-    container_name: postgres_db
+    container_name: postgres_db_new
     env_file: ./backend/cyblo/.env
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - local_cyblo_network
+
+  django:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: django_app
+    env_file: ./backend/cyblo/.env
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8001:8000"
+    command: bash -c "python manage.py check &&
+      python manage.py migrate &&
+      gunicorn cyblo.wsgi --bind 0.0.0.0:8000 --timeout 1000"
+    networks:
+      - local_cyblo_network
+
+
+  angular:
+    build:
+      context: ./frontend/cyblo-app-frontend
+      dockerfile: Dockerfile
+    container_name: angular_app
+    volumes:
+      - angular_dist:/app/dist/cyblo-app-frontend
+    networks:
+      - local_cyblo_network
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
+    depends_on:
+      - django
+      - angular
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - angular_dist:/var/angular_dist
+    ports:
+      - "80:80"
+      - "4200:80"
+    networks:
+      - local_cyblo_network
 
 volumes:
-  postgres_data:
+    angular_dist:
+    postgres_data:
 
+networks:
+  local_cyblo_network:
