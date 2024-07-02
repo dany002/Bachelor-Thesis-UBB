@@ -37,7 +37,7 @@ services:
       dockerfile: Dockerfile
     container_name: angular_app
     volumes:
-      - angular_dist:/app/dist/cyblo-app-frontend
+      - angular_dist:/app/dist
     networks:
       - local_cyblo_network
 
@@ -50,9 +50,11 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - angular_dist:/var/angular_dist
+    links:
+      - django
     ports:
-      - "80:80"
       - "4200:80"
+      - "80:80"
     networks:
       - local_cyblo_network
 
