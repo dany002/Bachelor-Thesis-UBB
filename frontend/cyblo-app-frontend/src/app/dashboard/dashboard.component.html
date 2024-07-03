@@ -1,10 +1,8 @@
 <div class="container">
   <div class="header">
-<!--    <div class="header-left">-->
-<!--      <button mat-raised-button color="primary" (click)="openAddProjectDialog()">Add New Project</button>-->
-<!--      <button mat-raised-button color="accent" (click)="openAddFileDialog()">Add New File</button>-->
-<!--      <button mat-raised-button color="warn" (click)="openAddConnectionDialog()">Add New Connection</button>-->
-<!--    </div>-->
+    <div class="header-left">
+      <img src="assets/logo.png" alt="Logo" class="logo">
+    </div>
     <div class="header-right">
       <mat-form-field appearance="fill">
         <mat-label>Select Project</mat-label>
@@ -142,8 +140,8 @@
       </table>
 
       <h3>Confusion Matrix</h3>
-      <h4>LSTM</h4>
-      <table mat-table [dataSource]="responseData.ai_confusion_matrix" class="mat-elevation-z8">
+      <h4>Bi-LSTM</h4>
+      <table mat-table [dataSource]="responseData.bilstm_confusion_matrix" class="mat-elevation-z8">
         <!-- Label Column -->
         <ng-container matColumnDef="label">
           <th mat-header-cell *matHeaderCellDef> Actual/Predicted </th>
@@ -168,7 +166,7 @@
       </table>
 
       <h4>Random Forests</h4>
-      <table mat-table [dataSource]="responseData.random_confusion_matrix" class="mat-elevation-z8">
+      <table mat-table [dataSource]="responseData.random_forest_confusion_matrix" class="mat-elevation-z8">
         <!-- Label Column -->
         <ng-container matColumnDef="label">
           <th mat-header-cell *matHeaderCellDef> Actual/Predicted </th>

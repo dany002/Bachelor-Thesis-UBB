@@ -15,7 +15,7 @@ export class AddFileDialogComponent {
   path: string = '';
   service_account_key: string = '';
   type: string = '';
-  fileTypes: string[] = ['SQL', 'DDOS', 'XSS', 'Anomaly', 'None'];
+  fileTypes: string[] = ['SQL', 'XSS', 'None'];
   project: Project | undefined;
   projects: Project[];
 

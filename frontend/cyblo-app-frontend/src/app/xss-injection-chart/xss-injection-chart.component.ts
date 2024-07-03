@@ -79,7 +79,7 @@ export class XssInjectionChartComponent implements OnInit, OnDestroy, OnChanges 
       },
       y: {
         beginAtZero: true,
-        max: 200,
+        max: 250,
         title: {
           display: true,
           text: 'Count of XSS Attacks Detections'

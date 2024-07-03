@@ -85,7 +85,7 @@ export class SqlInjectionChartDetailedAiRegexComponent implements OnInit, OnDest
       },
       y: {
         beginAtZero: true,
-        max: 100,
+        max: 250,
         title: {
           display: true,
           text: 'Count of SQL Injection Detections'

@@ -18,7 +18,7 @@ export class EditFileDialogComponent {
   fileId: string = '';
   projects: Project[];
   selectedProjectId: string = '';
-  fileTypes: string[] = ['SQL', 'DDOS', 'XSS', 'Anomaly', 'None'];
+  fileTypes: string[] = ['SQL', 'XSS', 'None'];
 
   constructor( @Inject(MAT_DIALOG_DATA) public data: any, public dialogRef: MatDialogRef<EditFileDialogComponent>, private dashboardService: DashboardService, private alertService: AlertService) {
     this.fileId = this.data.fileId;
